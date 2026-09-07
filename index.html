@@ -3,347 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>暗黑像素 RPG - 裝備刷怪</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <title>遺忘之劍 - 核心機制版</title>
     <style>
-        :root {
-            --bg-color: #0f0f1b;
-            --panel-bg: #1a1a2e;
-            --accent-gold: #ffcc00;
-            --accent-red: #ff4757;
-            --accent-green: #2ed573;
-            --accent-blue: #1e90ff;
-            --text-color: #e0e0e0;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .game-card {
-            width: 100%;
-            max-width: 500px;
-            background-color: var(--panel-bg);
-            border: 3px solid #2d2d44;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(255, 204, 0, 0.05);
-        }
-
-        h1 {
-            text-align: center;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 1.2rem;
-            color: var(--accent-gold);
-            margin-top: 0;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px #000;
-        }
-
-        /* 屬性面板 */
-        .panel {
-            background: #111122;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            border: 1px solid #2e2e4a;
-        }
-
-        .section-title {
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: #8888a0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-        }
-
-        /* 血條 */
-        .hp-container {
-            margin-bottom: 12px;
-        }
-        .hp-label {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-        }
-        .hp-bar-bg {
-            width: 100%;
-            height: 16px;
-            background-color: #2a2a3c;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #444;
-        }
-        .hp-bar-fill {
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(90deg, #ff4757, #ff6b81);
-            transition: width 0.3s ease;
-        }
-
-        /* 裝備卡片展示 */
-        .equip-card {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            background: #181828;
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 4px solid #555;
-            margin-bottom: 12px;
-        }
-        .equip-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .equip-name {
-            font-weight: bold;
-            font-size: 1.05rem;
-        }
-        .equip-stats {
-            font-size: 0.85rem;
-            color: #aaa;
-        }
-        .equip-effect {
-            font-size: 0.8rem;
-            color: var(--accent-gold);
-            background: rgba(255, 204, 0, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            width: fit-content;
-        }
-
-        /* 稀有度顏色 */
-        .tier-弱 { color: #a4b0be; border-color: #a4b0be !important; }
-        .tier-中 { color: #1e90ff; border-color: #1e90ff !important; }
-        .tier-強 { color: #ffa502; border-color: #ffa502 !important; }
-
-        /* 按鈕風格 */
-        .btn-group {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        button {
-            background: #2ed573;
-            color: #000;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            box-shadow: 0 4px 0 #1e9e52;
-        }
-        button:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 transparent;
-        }
-
-        .btn-craft {
-            width: 100%;
-            background: #eccc68;
-            box-shadow: 0 4px 0 #b5983b;
-            margin-top: 4px;
-        }
-
-        .btn-easy { background: #2ed573; box-shadow: 0 4px 0 #1e9e52; }
-        .btn-med { background: #ffa502; box-shadow: 0 4px 0 #c77e00; }
-        .btn-hard { background: #ff4757; color: #fff; box-shadow: 0 4px 0 #a42330; }
-
-        /* 戰鬥 Log */
-        .log-container {
-            background: #0a0a12;
-            border: 1px solid #2a2a3c;
-            border-radius: 8px;
-            height: 140px;
-            overflow-y: auto;
-            padding: 10px;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            color: #888;
-        }
-        .log-entry { margin-bottom: 4px; }
-        .log-player { color: #70a1ff; }
-        .log-monster { color: #ff6b81; }
-        .log-effect { color: var(--accent-gold); }
-        .log-win { color: #2ed573; font-weight: bold; }
-        .log-loss { color: #ff4757; font-weight: bold; }
+        body { font-family: monospace; background: #0c0d12; color: #d0d0d0; padding: 20px; }
+        .card { background: #161822; border: 1px solid #33374d; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+        button { background: #282c40; color: #fff; border: 1px solid #4a5070; padding: 8px 12px; cursor: pointer; margin-right: 5px; margin-bottom: 5px; }
+        button:hover { background: #3d4363; }
+        .log { background: #08080c; border: 1px solid #222533; height: 250px; overflow-y: auto; padding: 10px; font-size: 13px; line-height: 1.5; }
+        .txt-gold { color: #f1c40f; } .txt-red { color: #e74c3c; } .txt-blue { color: #3498db; } .txt-green { color: #2ecc71; }
     </style>
 </head>
 <body>
 
-<div class="game-card">
-    <h1>⚔️ PIXEL RPG ⚔️</h1>
+<h1>⚔️ 遺忘之劍 - 機制模擬</h1>
 
-    <div class="panel">
-        <div class="section-title">Hero Status</div>
-        
-        <div class="hp-container">
-            <div class="hp-label">
-                <span>HP</span>
-                <span><span id="player-hp">100</span> / 100</span>
-            </div>
-            <div class="hp-bar-bg">
-                <div class="hp-bar-fill" id="hp-fill"></div>
-            </div>
-        </div>
+<!-- 角色屬性 -->
+<div class="card">
+    <h3>英雄狀態 (Hero Status)</h3>
+    <p>血量: <span id="p-hp" class="txt-red">200/200</span> | 耐力值 (Stamina): <span id="p-sta" class="txt-blue">100/100</span></p>
+    <p>基礎攻擊: <span id="p-atk">20</span> | 敏捷(攻速): <span id="p-spd">15</span> | 暴擊率: <span id="p-crit">5%</span></p>
+    <p>當前武器: <strong id="eq-name" class="txt-gold">無</strong></p>
+    <p id="eq-stats">屬性加成: 無</p>
+    <p id="eq-affix" class="txt-green">特殊詞條: 無</p>
+    <button onclick="craftEquipment()">🔨 鍛造裝備 (隨機詞條與階級)</button>
+</div>
 
-        <div class="equip-card" id="equip-card">
-            <div class="equip-header">
-                <span class="equip-name" id="equip-name">徒手裝備</span>
-                <span class="equip-stats">攻 +<span id="equip-atk">0</span> / 防 +<span id="equip-def">0</span></span>
-            </div>
-            <div class="equip-effect" id="equip-effect" style="display:none;">特殊效果</div>
-        </div>
+<!-- 戰鬥目標 -->
+<div class="card">
+    <h3>選擇關卡怪物 (Select Stage)</h3>
+    <button onclick="startBattle('small')">［小試身手］哥布林偵查兵 (風屬性)</button>
+    <button onclick="startBattle('medium')">［中級考驗］岩石巨人 (地屬性)</button>
+    <button onclick="startBattle('big')">［BOSS 戰］煉獄魔龍 (火屬性)</button>
+</div>
 
-        <button class="btn-craft" onclick="craftEquipment()">🔨 鍛造裝備 (隨機品質)</button>
-    </div>
-
-    <div class="panel">
-        <div class="section-title">Select Enemy</div>
-        <div class="btn-group">
-            <button class="btn-easy" onclick="startBattle('small')">小怪</button>
-            <button class="btn-med" onclick="startBattle('medium')">中怪</button>
-            <button class="btn-hard" onclick="startBattle('big')">大怪</button>
-        </div>
-    </div>
-
-    <div class="section-title">Battle Log</div>
-    <div class="log-container" id="game-log">
-        <div class="log-entry">準備就緒，請打造裝備並選擇對手...</div>
-    </div>
+<!-- 戰鬥 Log -->
+<div class="card">
+    <h3>戰鬥演算數據 (Combat Calculation Log)</h3>
+    <div class="log" id="log">點擊鍛造裝備或選擇怪物開始戰鬥...<br></div>
 </div>
 
 <script>
-    let player = { maxHp: 100, hp: 100, baseAtk: 15, equip: null };
-
-    const specialEffects = [
-        { name: "⚡ 反傷 25%", type: "reflect", value: 0.25 },
-        { name: "🩸 吸血 15%", type: "lifesteal", value: 0.15 },
-        { name: "🛡️ 防禦下降 10%", type: "defDown", value: 0.10 },
-        { name: "💀 易傷 (+15%承傷)", type: "fragile", value: 0.15 }
-    ];
-
-    function craftEquipment() {
-        const qualities = [
-            { tier: "弱", atk: Math.floor(Math.random() * 5) + 1, def: Math.floor(Math.random() * 3) + 1 },
-            { tier: "中", atk: Math.floor(Math.random() * 8) + 6, def: Math.floor(Math.random() * 5) + 4 },
-            { tier: "強", atk: Math.floor(Math.random() * 12) + 15, def: Math.floor(Math.random() * 8) + 8 }
-        ];
-
-        const selected = qualities[Math.floor(Math.random() * qualities.length)];
-        let effect = Math.random() < 0.25 ? specialEffects[Math.floor(Math.random() * specialEffects.length)] : null;
-
-        player.equip = { name: `${selected.tier}級裝備`, tier: selected.tier, atk: selected.atk, def: selected.def, effect: effect };
-
-        // UI 渲染
-        const card = document.getElementById('equip-card');
-        card.className = `equip-card tier-${selected.tier}`;
-        document.getElementById('equip-name').innerText = player.equip.name;
-        document.getElementById('equip-atk').innerText = player.equip.atk;
-        document.getElementById('equip-def').innerText = player.equip.def;
-
-        const effectEl = document.getElementById('equip-effect');
-        if (effect) {
-            effectEl.innerText = effect.name;
-            effectEl.style.display = "inline-block";
-        } else {
-            effectEl.style.display = "none";
-        }
-
-        log(`🔨 成功鍛造出 <span class="tier-${selected.tier}">[${player.equip.name}]</span>！`);
-    }
-
-    const monsters = {
-        small: { name: "史萊姆", hp: 30, atk: 8, def: 2 },
-        medium: { name: "哥布林", hp: 70, atk: 18, def: 5 },
-        big: { name: "紅蓮巨龍", hp: 150, atk: 32, def: 10 }
+    // 玩家主體數據
+    let hero = {
+        maxHp: 200, hp: 200,
+        maxSta: 100, sta: 100,
+        baseAtk: 20, speed: 15, critRate: 0.05,
+        element: "無", equip: null
     };
 
-    function startBattle(difficulty) {
-        let monster = { ...monsters[difficulty] };
-        player.hp = player.maxHp;
-        updateHpUI();
+    // 《遺忘之劍》風格：詞條資料庫 (正負面與特殊機制)
+    const affixPool = [
+        { name: "狂暴 (暴擊率+20%，但每回合扣除 5% 現有生命)", type: "berserk", critBonus: 0.2, selfBleed: 0.05 },
+        { name: "破甲 (攻擊有 30% 機率直接削減目標 30 點耐力)", type: "armorBreak", breakBonus: 30 },
+        { name: "吸血詛咒 (造成傷害的 20% 轉為吸血，但受到傷害+15%)", type: "vamp", lifesteal: 0.2, dmgTakeBonus: 0.15 },
+        { name: "疾風 (敏捷+10，攻擊時 25% 機率觸發第二次連擊)", type: "wind", spdBonus: 10, doubleHit: 0.25 },
+        { name: "劇毒刃 (攻擊時 25% 機率使目標陷入中殘毒)", type: "poison", poisonChance: 0.25 }
+    ];
 
-        log(`--- ⚔️ 進入戰鬥：對決 ${monster.name} ---`);
+    // 裝備生成器
+    function craftEquipment() {
+        const tiers = [
+            { tier: "破舊", mult: 0.8, color: "#95a5a6" },
+            { tier: "精鋼", mult: 1.5, color: "#3498db" },
+            { tier: "遺忘傳承", mult: 2.8, color: "#f1c40f" }
+        ];
+        const elements = ["火", "水", "風", "地"];
+        
+        let t = tiers[Math.floor(Math.random() * tiers.length)];
+        let elem = elements[Math.floor(Math.random() * elements.length)];
+        
+        let atkVal = Math.floor((Math.random() * 10 + 10) * t.mult);
+        let spdVal = Math.floor((Math.random() * 5 + 2) * t.mult);
+        
+        // 25% 觸發特殊詞條
+        let affix = Math.random() < 0.25 ? affixPool[Math.floor(Math.random() * affixPool.length)] : null;
 
-        let equipAtk = player.equip ? player.equip.atk : 0;
-        let equipDef = player.equip ? player.equip.def : 0;
-        let effect = player.equip ? player.equip.effect : null;
+        hero.equip = {
+            name: `${t.tier}的${elem}屬性長劍`,
+            tier: t.tier, color: t.color, element: elem,
+            atk: atkVal, speed: spdVal, affix: affix
+        };
 
-        if (effect && effect.type === "defDown") equipDef = Math.floor(equipDef * 0.9);
+        // UI 數據更新
+        document.getElementById('eq-name').innerText = hero.equip.name;
+        document.getElementById('eq-name').style.color = hero.equip.color;
+        document.getElementById('eq-stats').innerText = `攻擊 +${atkVal} | 敏捷 +${spdVal} | 屬性: ${elem}`;
+        document.getElementById('eq-affix').innerText = affix ? `詞條: ${affix.name}` : "詞條: 無 (普通裝備)";
 
+        log(`🔨 成功鍛造出 <span style="color:${t.color}">[${hero.equip.name}]</span>！`);
+    }
+
+    // 怪物數據庫
+    const monsters = {
+        small: { name: "哥布林偵查兵", hp: 120, maxHp: 120, sta: 40, maxSta: 40, atk: 15, speed: 12, element: "風" },
+        medium: { name: "岩石巨人", hp: 300, maxHp: 300, sta: 100, maxSta: 100, atk: 28, speed: 8, element: "地" },
+        big: { name: "煉獄魔龍", hp: 650, maxHp: 650, sta: 180, maxSta: 180, atk: 45, speed: 18, element: "火" }
+    };
+
+    // 屬性相剋判定 (火 -> 風 -> 地 -> 水 -> 火)
+    function getElementMultiplier(attElem, defElem) {
+        if (!attElem || !defElem || attElem === "無") return 1.0;
+        if (attElem === "火" && defElem === "風") return 1.3;
+        if (attElem === "風" && defElem === "地") return 1.3;
+        if (attElem === "地" && defElem === "水") return 1.3;
+        if (attElem === "水" && defElem === "火") return 1.3;
+        
+        if (attElem === "風" && defElem === "火") return 0.7;
+        if (attElem === "地" && defElem === "風") return 0.7;
+        if (attElem === "水" && defElem === "地") return 0.7;
+        if (attElem === "火" && defElem === "水") return 0.7;
+        return 1.0;
+    }
+
+    // 戰鬥的核心演算引擎
+    function startBattle(diff) {
+        let m = JSON.parse(JSON.stringify(monsters[diff]));
+        hero.hp = hero.maxHp;
+        hero.sta = hero.maxSta;
+
+        log(`--------------------------------------------------`);
+        log(`⚔️ 戰鬥開始！對抗 <strong class="txt-red">${m.name}</strong> (${m.element}屬性)`);
+
+        let eq = hero.equip || { atk: 0, speed: 0, element: "無", affix: null };
+        let totalAtk = hero.baseAtk + eq.atk;
+        let totalSpeed = hero.speed + eq.speed + (eq.affix?.spdBonus || 0);
+        let critRate = hero.critRate + (eq.affix?.critBonus || 0);
+
+        let mPoisonStacks = 0;
         let round = 1;
-        while (player.hp > 0 && monster.hp > 0) {
-            // 玩家攻擊
-            let pDamage = Math.max(1, (player.baseAtk + equipAtk) - monster.def);
-            monster.hp -= pDamage;
-            log(`<span class="log-player">你</span> 攻擊造成 <b>${pDamage}</b> 點傷害`);
 
-            if (effect && effect.type === "lifesteal") {
-                let heal = Math.floor(pDamage * effect.value);
-                player.hp = Math.min(player.maxHp, player.hp + heal);
-                log(`<span class="log-effect">${effect.name}：恢復了 ${heal} HP</span>`);
+        while (hero.hp > 0 && m.hp > 0) {
+            log(`<br><strong>[ Round ${round} ]</strong>`);
+
+            // 1. 回合開始前的 Debuff 結算
+            if (eq.affix?.type === "berserk") {
+                let selfDmg = Math.floor(hero.hp * eq.affix.selfBleed);
+                hero.hp -= selfDmg;
+                log(`<span class="txt-red">🩸 狂暴反噬：你失去了 ${selfDmg} 生命值。</span>`);
             }
 
-            if (monster.hp <= 0) {
-                log(`<span class="log-win">🎉 戰鬥勝利！擊敗了 ${monster.name}</span>`);
-                break;
+            if (mPoisonStacks > 0) {
+                let pDmg = mPoisonStacks * 12;
+                m.hp -= pDmg;
+                log(`<span class="txt-green">🤢 劇毒發作：${m.name} 受到 ${pDmg} 點毒性傷害 (層數: ${mPoisonStacks})。</span>`);
             }
 
-            // 怪物攻擊
-            let mDamage = Math.max(1, monster.atk - equipDef);
-            if (effect && effect.type === "fragile") mDamage = Math.floor(mDamage * 1.15);
+            if (m.hp <= 0) { log(victoryLog(m.name)); break; }
+            if (hero.hp <= 0) { log(defeatLog(m.name)); break; }
 
-            player.hp -= mDamage;
-            log(`<span class="log-monster">${monster.name}</span> 對你造成 <b>${mDamage}</b> 點傷害`);
-
-            if (effect && effect.type === "reflect") {
-                let reflectDmg = Math.floor(mDamage * effect.value);
-                monster.hp -= reflectDmg;
-                log(`<span class="log-effect">${effect.name}：反彈了 ${reflectDmg} 傷害</span>`);
+            // 2. 順序判定
+            let heroFirst = totalSpeed >= m.speed;
+            
+            if (heroFirst) {
+                playerAttackPhase();
+                if (m.hp > 0) monsterAttackPhase();
+            } else {
+                monsterAttackPhase();
+                if (hero.hp > 0) playerAttackPhase();
             }
 
-            if (player.hp <= 0) {
-                log(`<span class="log-loss">💀 你戰敗了...</span>`);
-                break;
-            }
+            // 3. 回合結束耐力恢復
+            if (m.sta < m.maxSta) m.sta = Math.min(m.maxSta, m.sta + 5);
 
             round++;
-            if (round > 20) break;
+            if (round > 25) { log("⌛ 戰鬥逾時，雙方體力耗盡平手。"); break; }
         }
 
-        updateHpUI();
+        updateUI();
+
+        function playerAttackPhase() {
+            let isBreak = m.sta <= 0;
+            let mult = getElementMultiplier(eq.element, m.element);
+            
+            if (isBreak) mult *= 1.5;
+
+            let isCrit = Math.random() < critRate;
+            let dmg = Math.floor(totalAtk * mult * (isCrit ? 1.8 : 1.0));
+
+            m.hp -= dmg;
+            m.sta = Math.max(0, m.sta - 15);
+
+            let hitMsg = `<span class="txt-blue">你</span> 對 ${m.name} 造成 <b>${dmg}</b> 點傷害 ${isCrit ? '<strong class="txt-gold">(暴擊!)</strong>' : ''}`;
+            if (mult > 1.0) hitMsg += ` <span class="txt-green">(屬性克制)</span>`;
+            log(hitMsg);
+
+            if (eq.affix?.type === "armorBreak" && Math.random() < 0.3) {
+                m.sta = Math.max(0, m.sta - eq.affix.breakBonus);
+                log(`<span class="txt-gold">⚡ 觸發破甲：削減了 ${m.name} ${eq.affix.breakBonus} 點耐力！</span>`);
+            }
+
+            if (m.sta === 0 && !isBreak) {
+                log(`<span class="txt-gold">💥 BREAK！${m.name} 的姿態被打破，進入癱瘓狀態！</span>`);
+            }
+
+            if (eq.affix?.type === "vamp") {
+                let heal = Math.floor(dmg * eq.affix.lifesteal);
+                hero.hp = Math.min(hero.maxHp, hero.hp + heal);
+                log(`<span class="txt-green">🩸 吸血恢復了 ${heal} HP</span>`);
+            }
+
+            if (eq.affix?.type === "poison" && Math.random() < eq.affix.poisonChance) {
+                mPoisonStacks++;
+                log(`<span class="txt-green">🧪 成功施加中毒狀態！</span>`);
+            }
+
+            if (eq.affix?.type === "wind" && Math.random() < eq.affix.doubleHit) {
+                let extraDmg = Math.floor(dmg * 0.6);
+                m.hp -= extraDmg;
+                log(`<span class="txt-blue">🌀 觸發疾風連擊！追加造成 ${extraDmg} 點傷害。</span>`);
+            }
+        }
+
+        function monsterAttackPhase() {
+            if (m.sta <= 0) {
+                log(`<span class="txt-gold">💫 ${m.name} 處於破防癱瘓中，無法行動！</span>`);
+                return;
+            }
+
+            let mult = getElementMultiplier(m.element, eq.element);
+            let dmg = Math.floor(m.atk * mult);
+
+            if (eq.affix?.type === "vamp") dmg = Math.floor(dmg * (1 + eq.affix.dmgTakeBonus));
+
+            hero.hp -= dmg;
+            log(`<span class="txt-red">${m.name}</span> 對你造成 <b>${dmg}</b> 點傷害。`);
+        }
     }
 
-    function updateHpUI() {
-        const currentHp = Math.max(0, player.hp);
-        document.getElementById('player-hp').innerText = currentHp;
-        const pct = (currentHp / player.maxHp) * 100;
-        document.getElementById('hp-fill').style.width = `${pct}%`;
+    function victoryLog(name) { return `<br><span class="txt-green">🎉 戰鬥勝利！你討伐了 ${name}。</span>`; }
+    function defeatLog(name) { return `<br><span class="txt-red">💀 眼前一黑... 你被 ${name} 擊敗了。</span>`; }
+
+    function updateUI() {
+        document.getElementById('p-hp').innerText = `${Math.max(0, hero.hp)} / ${hero.maxHp}`;
+        document.getElementById('p-sta').innerText = `${Math.max(0, hero.sta)} / ${hero.maxSta}`;
     }
 
-    function log(message) {
-        const logBox = document.getElementById('game-log');
-        logBox.innerHTML += `<div class="log-entry">${message}</div>`;
-        logBox.scrollTop = logBox.scrollHeight;
+    function log(msg) {
+        const l = document.getElementById('log');
+        l.innerHTML += msg + "<br>";
+        l.scrollTop = l.scrollHeight;
     }
 </script>
 
