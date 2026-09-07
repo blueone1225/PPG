@@ -3,64 +3,317 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遺忘之劍 - 核心機制版</title>
+    <title>遺忘之劍 - 手遊風格UI</title>
     <style>
-        body { font-family: monospace; background: #0c0d12; color: #d0d0d0; padding: 20px; }
-        .card { background: #161822; border: 1px solid #33374d; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-        button { background: #282c40; color: #fff; border: 1px solid #4a5070; padding: 8px 12px; cursor: pointer; margin-right: 5px; margin-bottom: 5px; }
-        button:hover { background: #3d4363; }
-        .log { background: #08080c; border: 1px solid #222533; height: 250px; overflow-y: auto; padding: 10px; font-size: 13px; line-height: 1.5; }
-        .txt-gold { color: #f1c40f; } .txt-red { color: #e74c3c; } .txt-blue { color: #3498db; } .txt-green { color: #2ecc71; }
+        :root {
+            --bg-dark: rgba(18, 16, 23, 0.88);
+            --border-gold: rgba(212, 175, 55, 0.4);
+            --gold-light: #f3d17c;
+            --text-gray: #a0a0b0;
+            --red-dot: #ff4757;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: #121017 url('https://picsum.photos/1200/800?blur=4') no-repeat center center/cover;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* 遊戲背景遮罩 */
+        .game-screen {
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: flex-end;
+            position: relative;
+        }
+
+        /* 主選單容器 - 參考圖片的右側半透明彈窗 */
+        .menu-modal {
+            width: 480px;
+            height: 100%;
+            background: var(--bg-dark);
+            backdrop-filter: blur(12px);
+            border-left: 1px solid var(--border-gold);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+        }
+
+        /* 上方玩家資訊欄 */
+        .profile-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, rgba(0,0,0,0) 100%);
+        }
+
+        .avatar-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--gold-light);
+            box-shadow: 0 0 10px rgba(243, 209, 124, 0.3);
+            overflow: hidden;
+            background: #2a2838;
+        }
+
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .player-info { flex: 1; }
+        .player-name { font-size: 1.1rem; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .player-id { font-size: 0.75rem; color: var(--text-gray); margin-top: 4px; }
+        .player-id span { color: var(--gold-light); font-family: monospace; }
+        .player-status { font-size: 0.75rem; color: #666; margin-top: 2px; }
+
+        /* 中間 4x4 宮格按鈕區 */
+        .grid-container {
+            flex: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .grid-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .grid-item:hover:not(.locked) {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--gold-light);
+            transform: translateY(-2px);
+        }
+
+        .grid-item .icon { font-size: 1.8rem; margin-bottom: 6px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .grid-item .label { font-size: 0.75rem; color: #ddd; }
+
+        /* 鎖定狀態 */
+        .grid-item.locked { opacity: 0.35; cursor: not-allowed; }
+        .grid-item.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 0.8rem;
+            bottom: 6px;
+            right: 6px;
+        }
+
+        /* 紅點提示 */
+        .badge {
+            position: absolute;
+            top: 6px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--red-dot);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--red-dot);
+        }
+
+        /* 右側極窄側邊欄 (參考截圖最右側) */
+        .sidebar-right {
+            width: 60px;
+            height: 100%;
+            background: rgba(10, 8, 14, 0.95);
+            border-left: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            gap: 25px;
+        }
+
+        .sidebar-icon {
+            font-size: 1.2rem;
+            color: #777;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .sidebar-icon:hover { color: var(--gold-light); }
+
+        /* 戰鬥 Log 彈窗面板 (整合原遊戲邏輯) */
+        .battle-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: calc(100vw - 540px);
+            height: 100vh;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            pointer-events: none;
+        }
+
+        .log-box {
+            pointer-events: auto;
+            background: rgba(12, 13, 18, 0.85);
+            border: 1px solid var(--border-gold);
+            border-radius: 8px;
+            height: 220px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            backdrop-filter: blur(8px);
+        }
+
+        .txt-gold { color: var(--gold-light); }
+        .txt-red { color: #ff4757; }
+        .txt-blue { color: #1e90ff; }
+        .txt-green { color: #2ed573; }
+        .txt-gray { color: #888; }
     </style>
 </head>
 <body>
 
-<h1>⚔️ 遺忘之劍 - 機制模擬</h1>
+<div class="game-screen">
 
-<!-- 角色屬性 -->
-<div class="card">
-    <h3>英雄狀態 (Hero Status)</h3>
-    <p>血量: <span id="p-hp" class="txt-red">200/200</span> | 耐力值 (Stamina): <span id="p-sta" class="txt-blue">100/100</span></p>
-    <p>基礎攻擊: <span id="p-atk">20</span> | 敏捷(攻速): <span id="p-spd">15</span> | 暴擊率: <span id="p-crit">5%</span></p>
-    <p>當前武器: <strong id="eq-name" class="txt-gold">無</strong></p>
-    <p id="eq-stats">屬性加成: 無</p>
-    <p id="eq-affix" class="txt-green">特殊詞條: 無</p>
-    <button onclick="craftEquipment()">🔨 鍛造裝備 (隨機詞條與階級)</button>
-</div>
+    <!-- 左側戰鬥資訊 Log 區域 -->
+    <div class="battle-overlay">
+        <div class="log-box" id="log">
+            <span class="txt-gold">［系統］</span> 歡迎來到《遺忘之劍》，請點擊右側選單進行裝備鍛造或戰鬥。<br>
+        </div>
+    </div>
 
-<!-- 戰鬥目標 -->
-<div class="card">
-    <h3>選擇關卡怪物 (Select Stage)</h3>
-    <button onclick="startBattle('small')">［小試身手］哥布林偵查兵 (風屬性)</button>
-    <button onclick="startBattle('medium')">［中級考驗］岩石巨人 (地屬性)</button>
-    <button onclick="startBattle('big')">［BOSS 戰］煉獄魔龍 (火屬性)</button>
-</div>
+    <!-- 右側選單主體 -->
+    <div class="menu-modal">
+        <!-- 玩家個人資料 -->
+        <div class="profile-header">
+            <div class="avatar-box">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Fadeaway" alt="Avatar">
+            </div>
+            <div class="player-info">
+                <div class="player-name">Fadeaway <span style="font-size: 0.8rem; color: var(--gold-light);">✏️</span></div>
+                <div class="player-id">玩家專屬編號: <span>200009952</span></div>
+                <div class="player-status" id="player-hp-display">HP: 200/200 | STA: 100/100</div>
+            </div>
+        </div>
 
-<!-- 戰鬥 Log -->
-<div class="card">
-    <h3>戰鬥演算數據 (Combat Calculation Log)</h3>
-    <div class="log" id="log">點擊鍛造裝備或選擇怪物開始戰鬥...<br></div>
+        <!-- 4x4 宮格選單 (與截圖排版完全一致) -->
+        <div class="grid-container">
+            <!-- 第 1 列 -->
+            <div class="grid-item" onclick="craftEquipment()">
+                <div class="badge"></div>
+                <div class="icon">🔨</div>
+                <div class="label">鍛造裝備</div>
+            </div>
+            <div class="grid-item" onclick="startBattle('small')">
+                <div class="icon">🗡️</div>
+                <div class="label">哥布林</div>
+            </div>
+            <div class="grid-item" onclick="startBattle('medium')">
+                <div class="badge"></div>
+                <div class="icon">🗿</div>
+                <div class="label">岩石巨人</div>
+            </div>
+            <div class="grid-item" onclick="startBattle('big')">
+                <div class="badge"></div>
+                <div class="icon">🐉</div>
+                <div class="label">煉獄魔龍</div>
+            </div>
+
+            <!-- 第 2 列 -->
+            <div class="grid-item">
+                <div class="badge"></div>
+                <div class="icon">🎒</div>
+                <div class="label">角色背包</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">🐾</div>
+                <div class="label">寵物</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">✨</div>
+                <div class="label">成長</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">🏆</div>
+                <div class="label">聖物</div>
+            </div>
+
+            <!-- 第 3 列 -->
+            <div class="grid-item locked">
+                <div class="icon">🎲</div>
+                <div class="label">混沌魔方</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">⚒️</div>
+                <div class="label">製作</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">⛩️</div>
+                <div class="label">視鬥</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">📜</div>
+                <div class="label">圖鑑</div>
+            </div>
+
+            <!-- 第 4 列 -->
+            <div class="grid-item locked">
+                <div class="icon">📊</div>
+                <div class="label">排名</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">🛡️</div>
+                <div class="label">公會</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">👥</div>
+                <div class="label">好友</div>
+            </div>
+            <div class="grid-item locked">
+                <div class="icon">🎁</div>
+                <div class="label">活動</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側極窄側邊欄 -->
+    <div class="sidebar-right">
+        <div class="sidebar-icon">✖️</div>
+        <div class="sidebar-icon">🔒</div>
+        <div class="sidebar-icon">⚡</div>
+        <div class="sidebar-icon">⚙️</div>
+        <div class="sidebar-icon">📋</div>
+    </div>
+
 </div>
 
 <script>
-    // 玩家主體數據
-    let hero = {
-        maxHp: 200, hp: 200,
-        maxSta: 100, sta: 100,
-        baseAtk: 20, speed: 15, critRate: 0.05,
-        element: "無", equip: null
-    };
+    let hero = { maxHp: 200, hp: 200, maxSta: 100, sta: 100, baseAtk: 20, speed: 15, critRate: 0.05, element: "無", equip: null };
 
-    // 《遺忘之劍》風格：詞條資料庫 (正負面與特殊機制)
     const affixPool = [
-        { name: "狂暴 (暴擊率+20%，但每回合扣除 5% 現有生命)", type: "berserk", critBonus: 0.2, selfBleed: 0.05 },
-        { name: "破甲 (攻擊有 30% 機率直接削減目標 30 點耐力)", type: "armorBreak", breakBonus: 30 },
-        { name: "吸血詛咒 (造成傷害的 20% 轉為吸血，但受到傷害+15%)", type: "vamp", lifesteal: 0.2, dmgTakeBonus: 0.15 },
-        { name: "疾風 (敏捷+10，攻擊時 25% 機率觸發第二次連擊)", type: "wind", spdBonus: 10, doubleHit: 0.25 },
-        { name: "劇毒刃 (攻擊時 25% 機率使目標陷入中殘毒)", type: "poison", poisonChance: 0.25 }
+        { name: "狂暴 (暴擊率+20%，扣5%現有血)", type: "berserk", critBonus: 0.2, selfBleed: 0.05 },
+        { name: "破甲 (30%機率削30點耐力)", type: "armorBreak", breakBonus: 30 },
+        { name: "吸血詛咒 (吸血20%，受傷+15%)", type: "vamp", lifesteal: 0.2, dmgTakeBonus: 0.15 },
+        { name: "疾風 (敏捷+10，25%觸發連擊)", type: "wind", spdBonus: 10, doubleHit: 0.25 },
+        { name: "劇毒刃 (25%機率施加中毒)", type: "poison", poisonChance: 0.25 }
     ];
 
-    // 裝備生成器
     function craftEquipment() {
         const tiers = [
             { tier: "破舊", mult: 0.8, color: "#95a5a6" },
@@ -71,171 +324,119 @@
         
         let t = tiers[Math.floor(Math.random() * tiers.length)];
         let elem = elements[Math.floor(Math.random() * elements.length)];
-        
         let atkVal = Math.floor((Math.random() * 10 + 10) * t.mult);
         let spdVal = Math.floor((Math.random() * 5 + 2) * t.mult);
-        
-        // 25% 觸發特殊詞條
         let affix = Math.random() < 0.25 ? affixPool[Math.floor(Math.random() * affixPool.length)] : null;
 
-        hero.equip = {
-            name: `${t.tier}的${elem}屬性長劍`,
-            tier: t.tier, color: t.color, element: elem,
-            atk: atkVal, speed: spdVal, affix: affix
-        };
+        hero.equip = { name: `${t.tier}的${elem}長劍`, color: t.color, element: elem, atk: atkVal, speed: spdVal, affix: affix };
 
-        // UI 數據更新
-        document.getElementById('eq-name').innerText = hero.equip.name;
-        document.getElementById('eq-name').style.color = hero.equip.color;
-        document.getElementById('eq-stats').innerText = `攻擊 +${atkVal} | 敏捷 +${spdVal} | 屬性: ${elem}`;
-        document.getElementById('eq-affix').innerText = affix ? `詞條: ${affix.name}` : "詞條: 無 (普通裝備)";
-
-        log(`🔨 成功鍛造出 <span style="color:${t.color}">[${hero.equip.name}]</span>！`);
+        log(`🔨 打造出 <span style="color:${t.color}">[${hero.equip.name}]</span> (攻+${atkVal}, 敏+${spdVal}) ${affix ? `【${affix.name}】` : ''}`);
     }
 
-    // 怪物數據庫
     const monsters = {
-        small: { name: "哥布林偵查兵", hp: 120, maxHp: 120, sta: 40, maxSta: 40, atk: 15, speed: 12, element: "風" },
-        medium: { name: "岩石巨人", hp: 300, maxHp: 300, sta: 100, maxSta: 100, atk: 28, speed: 8, element: "地" },
-        big: { name: "煉獄魔龍", hp: 650, maxHp: 650, sta: 180, maxSta: 180, atk: 45, speed: 18, element: "火" }
+        small: { name: "哥布林偵查兵", hp: 120, sta: 40, maxSta: 40, atk: 15, speed: 12, element: "風" },
+        medium: { name: "岩石巨人", hp: 300, sta: 100, maxSta: 100, atk: 28, speed: 8, element: "地" },
+        big: { name: "煉獄魔龍", hp: 650, sta: 180, maxSta: 180, atk: 45, speed: 18, element: "火" }
     };
 
-    // 屬性相剋判定 (火 -> 風 -> 地 -> 水 -> 火)
     function getElementMultiplier(attElem, defElem) {
         if (!attElem || !defElem || attElem === "無") return 1.0;
-        if (attElem === "火" && defElem === "風") return 1.3;
-        if (attElem === "風" && defElem === "地") return 1.3;
-        if (attElem === "地" && defElem === "水") return 1.3;
-        if (attElem === "水" && defElem === "火") return 1.3;
-        
-        if (attElem === "風" && defElem === "火") return 0.7;
-        if (attElem === "地" && defElem === "風") return 0.7;
-        if (attElem === "水" && defElem === "地") return 0.7;
-        if (attElem === "火" && defElem === "水") return 0.7;
+        if ((attElem === "火" && defElem === "風") || (attElem === "風" && defElem === "地") || (attElem === "地" && defElem === "水") || (attElem === "水" && defElem === "火")) return 1.3;
+        if ((attElem === "風" && defElem === "火") || (attElem === "地" && defElem === "風") || (attElem === "水" && defElem === "地") || (attElem === "火" && defElem === "水")) return 0.7;
         return 1.0;
     }
 
-    // 戰鬥的核心演算引擎
+    let battleTimer = null;
+
     function startBattle(diff) {
+        if (battleTimer) clearInterval(battleTimer);
         let m = JSON.parse(JSON.stringify(monsters[diff]));
         hero.hp = hero.maxHp;
         hero.sta = hero.maxSta;
+        updateUI();
 
         log(`--------------------------------------------------`);
-        log(`⚔️ 戰鬥開始！對抗 <strong class="txt-red">${m.name}</strong> (${m.element}屬性)`);
+        log(`⚔️ 挑戰 <strong class="txt-red">${m.name}</strong> (HP: ${m.hp} | 屬性: ${m.element})`);
 
         let eq = hero.equip || { atk: 0, speed: 0, element: "無", affix: null };
         let totalAtk = hero.baseAtk + eq.atk;
         let totalSpeed = hero.speed + eq.speed + (eq.affix?.spdBonus || 0);
         let critRate = hero.critRate + (eq.affix?.critBonus || 0);
+        let mPoisonStacks = 0, round = 1;
 
-        let mPoisonStacks = 0;
-        let round = 1;
+        battleTimer = setInterval(() => {
+            log(`<span class="txt-gray">--- 回合 ${round} ---</span>`);
 
-        while (hero.hp > 0 && m.hp > 0) {
-            log(`<br><strong>[ Round ${round} ]</strong>`);
-
-            // 1. 回合開始前的 Debuff 結算
             if (eq.affix?.type === "berserk") {
-                let selfDmg = Math.floor(hero.hp * eq.affix.selfBleed);
+                let selfDmg = Math.max(1, Math.floor(hero.hp * eq.affix.selfBleed));
                 hero.hp -= selfDmg;
-                log(`<span class="txt-red">🩸 狂暴反噬：你失去了 ${selfDmg} 生命值。</span>`);
+                log(`<span class="txt-red">🩸 狂暴反噬扣除 ${selfDmg} 生命</span>`);
+                if (checkDeath()) return;
             }
 
             if (mPoisonStacks > 0) {
                 let pDmg = mPoisonStacks * 12;
                 m.hp -= pDmg;
-                log(`<span class="txt-green">🤢 劇毒發作：${m.name} 受到 ${pDmg} 點毒性傷害 (層數: ${mPoisonStacks})。</span>`);
+                log(`<span class="txt-green">🤢 中毒發作：${m.name} 受到 ${pDmg} 點毒傷</span>`);
+                if (checkDeath()) return;
             }
 
-            if (m.hp <= 0) { log(victoryLog(m.name)); break; }
-            if (hero.hp <= 0) { log(defeatLog(m.name)); break; }
-
-            // 2. 順序判定
-            let heroFirst = totalSpeed >= m.speed;
-            
-            if (heroFirst) {
-                playerAttackPhase();
-                if (m.hp > 0) monsterAttackPhase();
+            if (totalSpeed >= m.speed) {
+                playerAttack();
+                if (m.hp > 0) monsterAttack();
             } else {
-                monsterAttackPhase();
-                if (hero.hp > 0) playerAttackPhase();
+                monsterAttack();
+                if (hero.hp > 0) playerAttack();
             }
 
-            // 3. 回合結束耐力恢復
-            if (m.sta < m.maxSta) m.sta = Math.min(m.maxSta, m.sta + 5);
+            updateUI();
+            if (checkDeath()) return;
 
             round++;
-            if (round > 25) { log("⌛ 戰鬥逾時，雙方體力耗盡平手。"); break; }
-        }
+            if (round > 20) { log(`<span class="txt-gold">⌛ 戰鬥平手</span>`); clearInterval(battleTimer); }
+        }, 500);
 
-        updateUI();
-
-        function playerAttackPhase() {
-            let isBreak = m.sta <= 0;
-            let mult = getElementMultiplier(eq.element, m.element);
-            
-            if (isBreak) mult *= 1.5;
-
+        function playerAttack() {
+            let mult = getElementMultiplier(eq.element, m.element) * (m.sta <= 0 ? 1.5 : 1.0);
             let isCrit = Math.random() < critRate;
-            let dmg = Math.floor(totalAtk * mult * (isCrit ? 1.8 : 1.0));
+            let dmg = Math.max(1, Math.floor(totalAtk * mult * (isCrit ? 1.8 : 1.0)));
 
             m.hp -= dmg;
             m.sta = Math.max(0, m.sta - 15);
 
-            let hitMsg = `<span class="txt-blue">你</span> 對 ${m.name} 造成 <b>${dmg}</b> 點傷害 ${isCrit ? '<strong class="txt-gold">(暴擊!)</strong>' : ''}`;
-            if (mult > 1.0) hitMsg += ` <span class="txt-green">(屬性克制)</span>`;
-            log(hitMsg);
+            log(`<span class="txt-blue">你</span> 造成 <b>${dmg}</b> 點傷害 ${isCrit ? '<strong class="txt-gold">[暴擊!]</strong>' : ''}`);
 
-            if (eq.affix?.type === "armorBreak" && Math.random() < 0.3) {
-                m.sta = Math.max(0, m.sta - eq.affix.breakBonus);
-                log(`<span class="txt-gold">⚡ 觸發破甲：削減了 ${m.name} ${eq.affix.breakBonus} 點耐力！</span>`);
-            }
-
-            if (m.sta === 0 && !isBreak) {
-                log(`<span class="txt-gold">💥 BREAK！${m.name} 的姿態被打破，進入癱瘓狀態！</span>`);
-            }
-
+            if (m.sta === 0) log(`<span class="txt-gold">💥 BREAK! ${m.name} 癱瘓！</span>`);
             if (eq.affix?.type === "vamp") {
                 let heal = Math.floor(dmg * eq.affix.lifesteal);
                 hero.hp = Math.min(hero.maxHp, hero.hp + heal);
-                log(`<span class="txt-green">🩸 吸血恢復了 ${heal} HP</span>`);
             }
-
-            if (eq.affix?.type === "poison" && Math.random() < eq.affix.poisonChance) {
-                mPoisonStacks++;
-                log(`<span class="txt-green">🧪 成功施加中毒狀態！</span>`);
-            }
-
-            if (eq.affix?.type === "wind" && Math.random() < eq.affix.doubleHit) {
-                let extraDmg = Math.floor(dmg * 0.6);
-                m.hp -= extraDmg;
-                log(`<span class="txt-blue">🌀 觸發疾風連擊！追加造成 ${extraDmg} 點傷害。</span>`);
-            }
+            if (eq.affix?.type === "poison" && Math.random() < eq.affix.poisonChance) mPoisonStacks++;
         }
 
-        function monsterAttackPhase() {
-            if (m.sta <= 0) {
-                log(`<span class="txt-gold">💫 ${m.name} 處於破防癱瘓中，無法行動！</span>`);
-                return;
-            }
-
-            let mult = getElementMultiplier(m.element, eq.element);
-            let dmg = Math.floor(m.atk * mult);
-
-            if (eq.affix?.type === "vamp") dmg = Math.floor(dmg * (1 + eq.affix.dmgTakeBonus));
-
+        function monsterAttack() {
+            if (m.sta <= 0) return;
+            let dmg = Math.max(1, Math.floor(m.atk * getElementMultiplier(m.element, eq.element)));
             hero.hp -= dmg;
-            log(`<span class="txt-red">${m.name}</span> 對你造成 <b>${dmg}</b> 點傷害。`);
+            log(`<span class="txt-red">${m.name}</span> 造成 <b>${dmg}</b> 傷害`);
+        }
+
+        function checkDeath() {
+            if (hero.hp <= 0) {
+                hero.hp = 0; updateUI();
+                log(`<span class="txt-red">💀 戰鬥失敗...</span>`);
+                clearInterval(battleTimer); return true;
+            }
+            if (m.hp <= 0) {
+                log(`<span class="txt-green">🎉 戰鬥勝利！</span>`);
+                clearInterval(battleTimer); return true;
+            }
+            return false;
         }
     }
 
-    function victoryLog(name) { return `<br><span class="txt-green">🎉 戰鬥勝利！你討伐了 ${name}。</span>`; }
-    function defeatLog(name) { return `<br><span class="txt-red">💀 眼前一黑... 你被 ${name} 擊敗了。</span>`; }
-
     function updateUI() {
-        document.getElementById('p-hp').innerText = `${Math.max(0, hero.hp)} / ${hero.maxHp}`;
-        document.getElementById('p-sta').innerText = `${Math.max(0, hero.sta)} / ${hero.maxSta}`;
+        document.getElementById('player-hp-display').innerText = `HP: ${Math.max(0, hero.hp)}/${hero.maxHp} | STA: ${Math.max(0, hero.sta)}/${hero.maxSta}`;
     }
 
     function log(msg) {
