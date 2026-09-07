@@ -1,13 +1,23 @@
+<br>故事發生在混沌時代，傳說中蘊含神之力量的「聖劍」在某一天突然消失無蹤。</br>
+<br></br>
+<br>赤龍的預言：根據預言，當赤龍的守護消失時，聖劍將會重新現世，並選擇和支持真正的王者。</br>
+
+<br>現代少年穿越：來自現實世界的學生少年伊森（Ethan）突然被傳送至奇幻大陸「布里塔尼亞」。</br>
+
+<br>命運的相遇：伊森被選中成為「劍之持有者」，並加入了伊莉莎白公主一行人的冒險旅程。</br>
+
+<br>反派勢力危機：大陸正面臨「偽王沃提根（Vortigern）」與「提亞瑪特教團」等黑暗勢力的威脅與挑戰。</br>
+ 
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遺忘之劍 - 手遊風格UI</title>
+    <title>遺忘之劍 - 裝備特性與隨機圖庫版</title>
     <style>
         :root {
-            --bg-dark: rgba(18, 16, 23, 0.88);
-            --border-gold: rgba(212, 175, 55, 0.4);
+            --bg-dark: rgba(18, 16, 23, 0.92);
+            --border-gold: rgba(212, 175, 55, 0.5);
             --gold-light: #f3d17c;
             --text-gray: #a0a0b0;
             --red-dot: #ff4757;
@@ -17,28 +27,92 @@
 
         body {
             font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            background: #121017 url('https://picsum.photos/1200/800?blur=4') no-repeat center center/cover;
             color: #fff;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.8s ease-in-out;
         }
 
-        /* 遊戲背景遮罩 */
         .game-screen {
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.4);
             display: flex;
-            justify-content: flex-end;
+            flex-direction: row;
             position: relative;
+            background: rgba(0, 0, 0, 0.4);
         }
 
-        /* 主選單容器 - 參考圖片的右側半透明彈窗 */
+        .battle-overlay {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 15px;
+            height: 100%;
+        }
+
+        .log-box {
+            background: rgba(12, 13, 18, 0.88);
+            border: 1px solid var(--border-gold);
+            border-radius: 8px;
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .skills-bar {
+            background: rgba(18, 16, 23, 0.95);
+            border: 1px solid var(--border-gold);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            justify-content: space-around;
+        }
+
+        .skill-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-btn:hover:not(:disabled) { background: rgba(212, 175, 55, 0.2); border-color: var(--gold-light); }
+        .skill-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+
+        .skill-icon { font-size: 1.2rem; }
+        .skill-name { font-size: 0.75rem; margin-top: 2px; }
+        .skill-cost { font-size: 0.65rem; color: #1e90ff; }
+        
+        .cooldown-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); color: var(--gold-light);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1rem;
+        }
+
         .menu-modal {
-            width: 480px;
+            width: 420px;
             height: 100%;
             background: var(--bg-dark);
             backdrop-filter: blur(12px);
@@ -46,397 +120,641 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+            z-index: 10;
         }
 
-        /* 上方玩家資訊欄 */
         .profile-header {
-            padding: 20px;
+            padding: 15px 20px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             border-bottom: 1px solid rgba(255,255,255,0.08);
-            background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(180deg, rgba(212, 175, 55, 0.15) 0%, rgba(0,0,0,0) 100%);
         }
 
         .avatar-box {
-            width: 60px;
-            height: 60px;
+            width: 50px; height: 50px;
             border-radius: 50%;
             border: 2px solid var(--gold-light);
-            box-shadow: 0 0 10px rgba(243, 209, 124, 0.3);
-            overflow: hidden;
-            background: #2a2838;
+            background: #3d354b;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
         }
 
-        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
-
         .player-info { flex: 1; }
-        .player-name { font-size: 1.1rem; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .player-id { font-size: 0.75rem; color: var(--text-gray); margin-top: 4px; }
-        .player-id span { color: var(--gold-light); font-family: monospace; }
-        .player-status { font-size: 0.75rem; color: #666; margin-top: 2px; }
+        .player-name { font-size: 1rem; font-weight: bold; color: #fff; }
+        .player-id { font-size: 0.7rem; color: var(--gold-light); margin-top: 2px; display: flex; align-items: center; gap: 5px; }
+        .edit-id-btn { cursor: pointer; font-size: 0.65rem; color: #aaa; text-decoration: underline; }
+        .edit-id-btn:hover { color: #fff; }
+        .player-stats { font-size: 0.75rem; color: #7bed9f; margin-top: 2px; }
+        .player-sub { font-size: 0.7rem; color: var(--text-gray); margin-top: 2px; }
 
-        /* 中間 4x4 宮格按鈕區 */
         .grid-container {
             flex: 1;
-            padding: 20px;
+            padding: 15px;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            gap: 15px;
+            gap: 10px;
             overflow-y: auto;
         }
 
         .grid-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px; cursor: pointer; transition: all 0.2s ease; position: relative;
         }
 
-        .grid-item:hover:not(.locked) {
-            background: rgba(212, 175, 55, 0.15);
-            border-color: var(--gold-light);
-            transform: translateY(-2px);
-        }
-
-        .grid-item .icon { font-size: 1.8rem; margin-bottom: 6px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-        .grid-item .label { font-size: 0.75rem; color: #ddd; }
-
-        /* 鎖定狀態 */
+        .grid-item:hover:not(.locked) { background: rgba(212, 175, 55, 0.15); border-color: var(--gold-light); }
+        .grid-item .icon { font-size: 1.5rem; margin-bottom: 4px; }
+        .grid-item .label { font-size: 0.7rem; color: #ddd; text-align: center; }
         .grid-item.locked { opacity: 0.35; cursor: not-allowed; }
-        .grid-item.locked::after {
-            content: '🔒';
-            position: absolute;
-            font-size: 0.8rem;
-            bottom: 6px;
-            right: 6px;
-        }
+        .grid-item.locked::after { content: '🔒'; position: absolute; font-size: 0.7rem; bottom: 4px; right: 4px; }
+        .badge { position: absolute; top: 4px; right: 6px; width: 6px; height: 6px; background-color: var(--red-dot); border-radius: 50%; }
 
-        /* 紅點提示 */
-        .badge {
-            position: absolute;
-            top: 6px;
-            right: 10px;
-            width: 8px;
-            height: 8px;
-            background-color: var(--red-dot);
-            border-radius: 50%;
-            box-shadow: 0 0 6px var(--red-dot);
+        .modal-popup {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 16, 23, 0.98); z-index: 20; display: none;
+            flex-direction: column; padding: 20px;
         }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-gold); padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-title { font-size: 1rem; color: var(--gold-light); font-weight: bold; }
+        .close-btn { cursor: pointer; font-size: 1.2rem; color: #888; }
+        .close-btn:hover { color: #fff; }
 
-        /* 右側極窄側邊欄 (參考截圖最右側) */
+        .inventory-grid, .shop-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 10px; overflow-y: auto; flex: 1; }
+        .inv-item, .shop-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; }
+        .inv-item.equipped { border-color: #2ed573; background: rgba(46,213,115,0.12); }
+        .trait-tag { color: #eccc68; font-size: 0.7rem; margin-top: 3px; font-weight: bold; }
+
         .sidebar-right {
-            width: 60px;
-            height: 100%;
+            width: 50px; height: 100%;
             background: rgba(10, 8, 14, 0.95);
             border-left: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 20px;
-            gap: 25px;
+            display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 20px;
         }
-
-        .sidebar-icon {
-            font-size: 1.2rem;
-            color: #777;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
+        .sidebar-icon { font-size: 1.1rem; color: #777; cursor: pointer; }
         .sidebar-icon:hover { color: var(--gold-light); }
-
-        /* 戰鬥 Log 彈窗面板 (整合原遊戲邏輯) */
-        .battle-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: calc(100vw - 540px);
-            height: 100vh;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            pointer-events: none;
-        }
-
-        .log-box {
-            pointer-events: auto;
-            background: rgba(12, 13, 18, 0.85);
-            border: 1px solid var(--border-gold);
-            border-radius: 8px;
-            height: 220px;
-            padding: 15px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            backdrop-filter: blur(8px);
-        }
 
         .txt-gold { color: var(--gold-light); }
         .txt-red { color: #ff4757; }
         .txt-blue { color: #1e90ff; }
         .txt-green { color: #2ed573; }
+        .txt-purple { color: #a55eea; }
         .txt-gray { color: #888; }
+
+        @media (max-width: 820px) {
+            .game-screen { flex-direction: column-reverse; overflow-y: auto; }
+            .menu-modal { width: 100vw; height: auto; border-left: none; border-top: 1px solid var(--border-gold); }
+            .sidebar-right { display: none; }
+            .battle-overlay { height: 380px; padding: 10px; }
+            .grid-container { grid-template-columns: repeat(4, 1fr); height: 260px; }
+            .skills-bar { padding: 6px; gap: 4px; }
+            .skill-name { font-size: 0.65rem; }
+        }
     </style>
 </head>
 <body>
 
 <div class="game-screen">
 
-    <!-- 左側戰鬥資訊 Log 區域 -->
+    <!-- 左側：戰鬥與技能 -->
     <div class="battle-overlay">
         <div class="log-box" id="log">
-            <span class="txt-gold">［系統］</span> 歡迎來到《遺忘之劍》，請點擊右側選單進行裝備鍛造或戰鬥。<br>
+            <span class="txt-gold">［系統］</span> 高畫質隨機背景庫與【裝備專屬特性系統】已成功載入！<br>
+        </div>
+
+        <div class="skills-bar">
+            <button class="skill-btn" id="sk-0" onclick="useSkill(0)">
+                <span class="skill-icon">🔥</span><span class="skill-name">烈焰焚身</span><span class="skill-cost">20 STA</span>
+                <div class="cooldown-overlay" id="cd-0" style="display:none;">0</div>
+            </button>
+            <button class="skill-btn" id="sk-1" onclick="useSkill(1)">
+                <span class="skill-icon">🛡️</span><span class="skill-name">聖光護盾</span><span class="skill-cost">25 STA</span>
+                <div class="cooldown-overlay" id="cd-1" style="display:none;">0</div>
+            </button>
+            <button class="skill-btn" id="sk-2" onclick="useSkill(2)">
+                <span class="skill-icon">🌀</span><span class="skill-name">疾風三連擊</span><span class="skill-cost">30 STA</span>
+                <div class="cooldown-overlay" id="cd-2" style="display:none;">0</div>
+            </button>
+            <button class="skill-btn" id="sk-3" onclick="useSkill(3)">
+                <span class="skill-icon">🗡️</span><span class="skill-name">重創破防</span><span class="skill-cost">35 STA</span>
+                <div class="cooldown-overlay" id="cd-3" style="display:none;">0</div>
+            </button>
+            <button class="skill-btn" id="sk-4" onclick="useSkill(4)">
+                <span class="skill-icon">🩸</span><span class="skill-name">血氣爆發</span><span class="skill-cost">40 STA</span>
+                <div class="cooldown-overlay" id="cd-4" style="display:none;">0</div>
+            </button>
         </div>
     </div>
 
-    <!-- 右側選單主體 -->
+    <!-- 右側：主選單 -->
     <div class="menu-modal">
-        <!-- 玩家個人資料 -->
         <div class="profile-header">
-            <div class="avatar-box">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Fadeaway" alt="Avatar">
-            </div>
+            <div class="avatar-box">🗡️</div>
             <div class="player-info">
-                <div class="player-name">Fadeaway <span style="font-size: 0.8rem; color: var(--gold-light);">✏️</span></div>
-                <div class="player-id">玩家專屬編號: <span>200009952</span></div>
-                <div class="player-status" id="player-hp-display">HP: 200/200 | STA: 100/100</div>
+                <div class="player-name">Fadeaway <span class="txt-gold" id="p-level">Lv.1</span></div>
+                <div class="player-id">
+                    <span id="p-custom-id">玩家編號：#884920</span>
+                    <span class="edit-id-btn" onclick="changePlayerID()">[修改]</span>
+                </div>
+                <div class="player-stats" id="p-hp-sta">HP: 200/200 | STA: 100/100</div>
+                <div class="player-sub" id="p-exp-gold">EXP: 0/100 | 金幣: 200G | 關卡: 1-1</div>
             </div>
         </div>
 
-        <!-- 4x4 宮格選單 (與截圖排版完全一致) -->
         <div class="grid-container">
-            <!-- 第 1 列 -->
             <div class="grid-item" onclick="craftEquipment()">
-                <div class="badge"></div>
-                <div class="icon">🔨</div>
-                <div class="label">鍛造裝備</div>
+                <div class="badge"></div><div class="icon">🔨</div><div class="label">鍛造裝備</div>
             </div>
-            <div class="grid-item" onclick="startBattle('small')">
-                <div class="icon">🗡️</div>
-                <div class="label">哥布林</div>
+            <div class="grid-item" onclick="openInventory()">
+                <div class="icon">🎒</div><div class="label">背包與裝備</div>
             </div>
-            <div class="grid-item" onclick="startBattle('medium')">
-                <div class="badge"></div>
-                <div class="icon">🗿</div>
-                <div class="label">岩石巨人</div>
+            <div class="grid-item" onclick="openShop()">
+                <div class="badge"></div><div class="icon">🏪</div><div class="label">金幣商店</div>
             </div>
-            <div class="grid-item" onclick="startBattle('big')">
-                <div class="badge"></div>
-                <div class="icon">🐉</div>
-                <div class="label">煉獄魔龍</div>
+            <div class="grid-item" onclick="startStageBattle()">
+                <div class="badge"></div><div class="icon">⚔️</div><div class="label">關卡挑戰</div>
             </div>
-
-            <!-- 第 2 列 -->
-            <div class="grid-item">
-                <div class="badge"></div>
-                <div class="icon">🎒</div>
-                <div class="label">角色背包</div>
+            <div class="grid-item" onclick="startBossBattle()">
+                <div class="badge"></div><div class="icon">🐉</div><div class="label">首領討伐</div>
             </div>
-            <div class="grid-item locked">
-                <div class="icon">🐾</div>
-                <div class="label">寵物</div>
-            </div>
-            <div class="grid-item locked">
-                <div class="icon">✨</div>
-                <div class="label">成長</div>
-            </div>
-            <div class="grid-item locked">
-                <div class="icon">🏆</div>
-                <div class="label">聖物</div>
+            <div class="grid-item" onclick="changeRandomBackground()">
+                <div class="icon">🖼️</div><div class="label">換隨機背景</div>
             </div>
 
-            <!-- 第 3 列 -->
-            <div class="grid-item locked">
-                <div class="icon">🎲</div>
-                <div class="label">混沌魔方</div>
-            </div>
-            <div class="grid-item locked">
-                <div class="icon">⚒️</div>
-                <div class="label">製作</div>
-            </div>
-            <div class="grid-item locked">
-                <div class="icon">⛩️</div>
-                <div class="label">視鬥</div>
-            </div>
-            <div class="grid-item locked">
-                <div class="icon">📜</div>
-                <div class="label">圖鑑</div>
-            </div>
+            <div class="grid-item locked"><div class="icon">🐾</div><div class="label">寵物</div></div>
+            <div class="grid-item locked"><div class="icon">✨</div><div class="label">成長</div></div>
+            <div class="grid-item locked"><div class="icon">🏆</div><div class="label">聖物</div></div>
+            <div class="grid-item locked"><div class="icon">🎲</div><div class="label">魔方</div></div>
+            <div class="grid-item locked"><div class="icon">⚒️</div><div class="label">製作</div></div>
+            <div class="grid-item locked"><div class="icon">⛩️</div><div class="label">試煉</div></div>
+            <div class="grid-item locked"><div class="icon">📜</div><div class="label">圖鑑</div></div>
+            <div class="grid-item locked"><div class="icon">📊</div><div class="label">排名</div></div>
+            <div class="grid-item locked"><div class="icon">🛡️</div><div class="label">公會</div></div>
+            <div class="grid-item locked"><div class="icon">⚙️</div><div class="label">設定</div></div>
+        </div>
 
-            <!-- 第 4 列 -->
-            <div class="grid-item locked">
-                <div class="icon">📊</div>
-                <div class="label">排名</div>
+        <!-- 背包視窗 -->
+        <div class="modal-popup" id="inventory-modal">
+            <div class="modal-header">
+                <div class="modal-title">🎒 角色背包 (包含特殊裝備特性)</div>
+                <div class="close-btn" onclick="closeModal('inventory-modal')">✖</div>
             </div>
-            <div class="grid-item locked">
-                <div class="icon">🛡️</div>
-                <div class="label">公會</div>
+            <div class="inventory-grid" id="inv-list"></div>
+        </div>
+
+        <!-- 商店視窗 -->
+        <div class="modal-popup" id="shop-modal">
+            <div class="modal-header">
+                <div class="modal-title">🏪 金幣道具商店</div>
+                <div class="close-btn" onclick="closeModal('shop-modal')">✖</div>
             </div>
-            <div class="grid-item locked">
-                <div class="icon">👥</div>
-                <div class="label">好友</div>
-            </div>
-            <div class="grid-item locked">
-                <div class="icon">🎁</div>
-                <div class="label">活動</div>
-            </div>
+            <div class="shop-grid" id="shop-list"></div>
         </div>
     </div>
 
-    <!-- 右側極窄側邊欄 -->
     <div class="sidebar-right">
-        <div class="sidebar-icon">✖️</div>
+        <div class="sidebar-icon" onclick="changeRandomBackground()" title="換隨機桌布">🖼️</div>
         <div class="sidebar-icon">🔒</div>
         <div class="sidebar-icon">⚡</div>
         <div class="sidebar-icon">⚙️</div>
-        <div class="sidebar-icon">📋</div>
     </div>
 
 </div>
 
 <script>
-    let hero = { maxHp: 200, hp: 200, maxSta: 100, sta: 100, baseAtk: 20, speed: 15, critRate: 0.05, element: "無", equip: null };
-
-    const affixPool = [
-        { name: "狂暴 (暴擊率+20%，扣5%現有血)", type: "berserk", critBonus: 0.2, selfBleed: 0.05 },
-        { name: "破甲 (30%機率削30點耐力)", type: "armorBreak", breakBonus: 30 },
-        { name: "吸血詛咒 (吸血20%，受傷+15%)", type: "vamp", lifesteal: 0.2, dmgTakeBonus: 0.15 },
-        { name: "疾風 (敏捷+10，25%觸發連擊)", type: "wind", spdBonus: 10, doubleHit: 0.25 },
-        { name: "劇毒刃 (25%機率施加中毒)", type: "poison", poisonChance: 0.25 }
+    // 1. 多樣隨機圖片庫 (使用 Unsplash 魔幻風格背景圖庫)
+    const bgImages = [
+        "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop", // 暗黑城堡
+        "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1600&auto=format&fit=crop", // 星空廢墟
+        "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop", // 雪山夜空
+        "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1600&auto=format&fit=crop", // 夢幻星雲
+        "https://images.unsplash.com/photo-1514539079130-25950c84af65?q=80&w=1600&auto=format&fit=crop", // 迷霧森林
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1600&auto=format&fit=crop"  // 雄偉山脈
     ];
 
+    function changeRandomBackground() {
+        let randomImg = bgImages[Math.floor(Math.random() * bgImages.length)];
+        document.body.style.backgroundImage = `url('${randomImg}')`;
+        log(`<span class="txt-gold">🖼️ 已隨機切換高清奇幻背景圖！</span>`);
+    }
+
+    // 2. 可自訂玩家編號
+    let playerId = "884920";
+    function changePlayerID() {
+        let newId = prompt("請輸入您的新專屬編號（最多6位數字或字母）：", playerId);
+        if (newId !== null && newId.trim() !== "") {
+            playerId = newId.trim().substring(0, 6);
+            document.getElementById('p-custom-id').innerText = `玩家編號：#${playerId}`;
+            log(`<span class="txt-green">✏️ 專屬編號已更新為：#${playerId}</span>`);
+        }
+    }
+
+    // 3. 裝備特性庫
+    const weaponTraits = [
+        { id: "vampire", name: "【特性：嗜血吸魂】", desc: "普通攻擊時附帶 15% 吸血效果", code: "vamp" },
+        { id: "flame", name: "【特性：熾熱烈焰】", desc: "攻擊時有 30% 機率直接讓敵人進入灼燒狀態", code: "burn" },
+        { id: "pierce", name: "【特性：貫穿破甲】", desc: "若敵人處於破防狀態，造成額外 50% 傷害", code: "pierce" },
+        { id: "shield", name: "【特性：堅守庇護】", desc: "回合開始時有 20% 機率自動獲得 40 點護盾", code: "shield" },
+        { id: "haste", name: "【特性：疾風迅捷】", desc: "技能冷卻時間減少 1 回合", code: "haste" }
+    ];
+
+    let hero = {
+        level: 1, exp: 0, maxExp: 100, gold: 200,
+        maxHp: 200, hp: 200,
+        maxSta: 100, sta: 100,
+        baseAtk: 25, critRate: 0.15,
+        shield: 0, buffAtk: 0,
+        equippedWeapon: null,
+        inventory: []
+    };
+
+    let stage = { chapter: 1, node: 1 };
+
+    const skills = [
+        { id: 0, name: "烈焰焚身", cost: 20, cd: 3, currentCd: 0 },
+        { id: 1, name: "聖光護盾", cost: 25, cd: 4, currentCd: 0 },
+        { id: 2, name: "疾風三連擊", cost: 30, cd: 3, currentCd: 0 },
+        { id: 3, name: "重創破防", cost: 35, cd: 4, currentCd: 0 },
+        { id: 4, name: "血氣爆發", cost: 40, cd: 5, currentCd: 0 }
+    ];
+
+    const shopItems = [
+        { id: 'p_hp', name: '大生命藥水', price: 50, desc: '恢復 100 點生命值', type: 'heal_hp' },
+        { id: 'p_sta', name: '大活力藥水', price: 50, desc: '恢復 50 點耐力值 (STA)', type: 'heal_sta' },
+        { id: 'buff_atk', name: '力量藥劑', price: 150, desc: '永久增加 5 點基礎攻擊力', type: 'perm_atk' },
+        { id: 'buff_hp', name: '體魄強化藥劑', price: 150, desc: '永久增加 30 點最大血量', type: 'perm_hp' },
+        { id: 'chest', name: '神秘特效寶箱', price: 200, desc: '獲得帶有專屬特性的精良武器', type: 'chest' }
+    ];
+
+    let currentMonster = null;
+    let battleTimer = null;
+    let inBattle = false;
+
+    // 鍛造裝備 (生成帶有特性的裝備)
     function craftEquipment() {
+        if (hero.inventory.length >= 8) {
+            log(`<span class="txt-red">⚠️ 背包空間不足（上限 8 個）！請先出售多餘裝備。</span>`);
+            return;
+        }
+
         const tiers = [
-            { tier: "破舊", mult: 0.8, color: "#95a5a6" },
-            { tier: "精鋼", mult: 1.5, color: "#3498db" },
-            { tier: "遺忘傳承", mult: 2.8, color: "#f1c40f" }
+            { tier: "破舊", mult: 1.0, color: "#95a5a6", crit: 0.02 },
+            { tier: "精鋼", mult: 1.8, color: "#3498db", crit: 0.05 },
+            { tier: "傳承", mult: 3.0, color: "#f1c40f", crit: 0.10 }
         ];
-        const elements = ["火", "水", "風", "地"];
+        const elements = ["火", "水", "風", "雷"];
         
         let t = tiers[Math.floor(Math.random() * tiers.length)];
         let elem = elements[Math.floor(Math.random() * elements.length)];
         let atkVal = Math.floor((Math.random() * 10 + 10) * t.mult);
-        let spdVal = Math.floor((Math.random() * 5 + 2) * t.mult);
-        let affix = Math.random() < 0.25 ? affixPool[Math.floor(Math.random() * affixPool.length)] : null;
+        let critVal = t.crit;
 
-        hero.equip = { name: `${t.tier}的${elem}長劍`, color: t.color, element: elem, atk: atkVal, speed: spdVal, affix: affix };
+        // 隨機抽選 1 個裝備特性
+        let trait = weaponTraits[Math.floor(Math.random() * weaponTraits.length)];
 
-        log(`🔨 打造出 <span style="color:${t.color}">[${hero.equip.name}]</span> (攻+${atkVal}, 敏+${spdVal}) ${affix ? `【${affix.name}】` : ''}`);
+        let item = {
+            id: Date.now(),
+            name: `${t.tier}的${elem}屬性長劍`,
+            color: t.color, element: elem, atk: atkVal, crit: critVal,
+            trait: trait
+        };
+
+        hero.inventory.push(item);
+        log(`🔨 成功打造 <span style="color:${item.color}">[${item.name}]</span>！<br>&nbsp;&nbsp;↳ 屬性: 攻擊+${atkVal}, 暴擊+${Math.round(critVal*100)}%<br>&nbsp;&nbsp;↳ <span class="txt-gold">${trait.name} ${trait.desc}</span>`);
+        updateUI();
     }
 
-    const monsters = {
-        small: { name: "哥布林偵查兵", hp: 120, sta: 40, maxSta: 40, atk: 15, speed: 12, element: "風" },
-        medium: { name: "岩石巨人", hp: 300, sta: 100, maxSta: 100, atk: 28, speed: 8, element: "地" },
-        big: { name: "煉獄魔龍", hp: 650, sta: 180, maxSta: 180, atk: 45, speed: 18, element: "火" }
-    };
-
-    function getElementMultiplier(attElem, defElem) {
-        if (!attElem || !defElem || attElem === "無") return 1.0;
-        if ((attElem === "火" && defElem === "風") || (attElem === "風" && defElem === "地") || (attElem === "地" && defElem === "水") || (attElem === "水" && defElem === "火")) return 1.3;
-        if ((attElem === "風" && defElem === "火") || (attElem === "地" && defElem === "風") || (attElem === "水" && defElem === "地") || (attElem === "火" && defElem === "水")) return 0.7;
-        return 1.0;
+    function openShop() {
+        let shopList = document.getElementById('shop-list');
+        shopList.innerHTML = '';
+        shopItems.forEach(item => {
+            let div = document.createElement('div');
+            div.className = 'shop-item';
+            div.innerHTML = `
+                <div>
+                    <div style="color:var(--gold-light); font-weight:bold; font-size:0.85rem;">${item.name}</div>
+                    <div style="font-size:0.7rem; color:#aaa; margin-top:4px;">${item.desc}</div>
+                </div>
+                <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <span class="txt-gold" style="font-size:0.8rem; font-weight:bold;">${item.price} G</span>
+                    <button onclick="buyShopItem('${item.id}')" style="font-size:0.7rem; padding:4px 8px; background:#2ed573; color:#fff; border:none; border-radius:4px; cursor:pointer;">購買</button>
+                </div>
+            `;
+            shopList.appendChild(div);
+        });
+        document.getElementById('shop-modal').style.display = 'flex';
     }
 
-    let battleTimer = null;
+    function buyShopItem(itemId) {
+        let item = shopItems.find(i => i.id === itemId);
+        if (!item) return;
+        if (hero.gold < item.price) {
+            log(`<span class="txt-red">⚠️ 金幣不足，無法購買 ${item.name}！</span>`);
+            return;
+        }
+        hero.gold -= item.price;
+        if (item.type === 'heal_hp') { hero.hp = Math.min(hero.maxHp, hero.hp + 100); log(`<span class="txt-green">🧪 使用了 ${item.name}，恢復 100 生命值！</span>`); }
+        else if (item.type === 'heal_sta') { hero.sta = Math.min(hero.maxSta, hero.sta + 50); log(`<span class="txt-blue">🧪 使用了 ${item.name}，恢復 50 STA！</span>`); }
+        else if (item.type === 'perm_atk') { hero.baseAtk += 5; log(`<span class="txt-gold">💪 使用了 ${item.name}，基礎攻擊力 +5！</span>`); }
+        else if (item.type === 'perm_hp') { hero.maxHp += 30; hero.hp += 30; log(`<span class="txt-gold">❤️ 使用了 ${item.name}，最大生命值 +30！</span>`); }
+        else if (item.type === 'chest') { craftEquipment(); }
+        updateUI();
+    }
 
-    function startBattle(diff) {
+    function openInventory() {
+        let invList = document.getElementById('inv-list');
+        invList.innerHTML = '';
+        if (hero.inventory.length === 0) {
+            invList.innerHTML = '<div style="text-align:center; color:#777; padding-top:40px;">背包空空如也，快去鍛造裝備吧！</div>';
+        } else {
+            hero.inventory.forEach(item => {
+                let isEquipped = hero.equippedWeapon && hero.equippedWeapon.id === item.id;
+                let div = document.createElement('div');
+                div.className = `inv-item ${isEquipped ? 'equipped' : ''}`;
+                div.innerHTML = `
+                    <div>
+                        <div style="color:${item.color}; font-weight:bold; font-size:0.85rem;">${item.name} ${isEquipped ? '［已裝備］' : ''}</div>
+                        <div style="font-size:0.75rem; color:#ccc; margin-top:3px;">基礎屬性：攻擊 +${item.atk} | 暴擊 +${Math.round(item.crit*100)}%</div>
+                        <div class="trait-tag">${item.trait.name}：${item.trait.desc}</div>
+                    </div>
+                    <div style="margin-top:8px; display:flex; gap:6px;">
+                        <button onclick="equipItem(${item.id})" style="flex:1; font-size:0.7rem; padding:5px; cursor:pointer;">${isEquipped ? '卸下' : '穿上裝備'}</button>
+                        <button onclick="sellItem(${item.id})" style="font-size:0.7rem; padding:5px; background:#ff4757; color:#fff; border:none; border-radius:3px; cursor:pointer;">出售</button>
+                    </div>
+                `;
+                invList.appendChild(div);
+            });
+        }
+        document.getElementById('inventory-modal').style.display = 'flex';
+    }
+
+    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+
+    function equipItem(id) {
+        if (hero.equippedWeapon && hero.equippedWeapon.id === id) {
+            hero.equippedWeapon = null;
+            log(`🛡️ 已卸下裝備。`);
+        } else {
+            let item = hero.inventory.find(i => i.id === id);
+            if (item) {
+                hero.equippedWeapon = item;
+                log(`⚔️ 成功裝備了 <span style="color:${item.color}">[${item.name}]</span>！<br>&nbsp;&nbsp;↳ 激活效果：<span class="txt-gold">${item.trait.name}</span>`);
+            }
+        }
+        updateUI();
+        openInventory();
+    }
+
+    function sellItem(id) {
+        let index = hero.inventory.findIndex(i => i.id === id);
+        if (index !== -1) {
+            if (hero.equippedWeapon && hero.equippedWeapon.id === id) hero.equippedWeapon = null;
+            hero.inventory.splice(index, 1);
+            hero.gold += 60;
+            log(`💰 出售裝備獲得 60 金幣！`);
+            updateUI();
+            openInventory();
+        }
+    }
+
+    function startStageBattle() {
+        if (inBattle) return;
+        let mHp = 120 + stage.chapter * 60 + stage.node * 25;
+        let mAtk = 18 + stage.chapter * 6 + stage.node * 3;
+        startBattleProcess({ name: `關卡怪物 ${stage.chapter}-${stage.node}`, hp: mHp, maxHp: mHp, atk: mAtk, armorBreak: 0, burn: 0, isBoss: false });
+    }
+
+    function startBossBattle() {
+        if (inBattle) return;
+        let mHp = 500 + stage.chapter * 250;
+        let mAtk = 40 + stage.chapter * 12;
+        startBattleProcess({ name: `第 ${stage.chapter} 章首領 · 煉獄魔龍`, hp: mHp, maxHp: mHp, atk: mAtk, armorBreak: 0, burn: 0, isBoss: true });
+    }
+
+    function useSkill(skillIdx) {
+        if (!inBattle || !currentMonster) return;
+        let sk = skills[skillIdx];
+        if (sk.currentCd > 0) { log(`<span class="txt-red">⚠️ ${sk.name} 尚在冷卻中（剩餘 ${sk.currentCd} 回合）</span>`); return; }
+        if (hero.sta < sk.cost) { log(`<span class="txt-red">⚠️ 耐力不足（需 ${sk.cost} STA）</span>`); return; }
+
+        hero.sta -= sk.cost;
+        
+        // 疾風迅捷特性：減少技能冷卻
+        let cdReduce = (hero.equippedWeapon && hero.equippedWeapon.trait.code === "haste") ? 1 : 0;
+        sk.currentCd = Math.max(1, sk.cd - cdReduce);
+        updateSkillCDUI();
+
+        let eqAtk = hero.equippedWeapon ? hero.equippedWeapon.atk : 0;
+        let totalAtk = hero.baseAtk + eqAtk + hero.buffAtk;
+
+        if (sk.id === 0) {
+            let dmg = Math.floor(totalAtk * 1.5);
+            currentMonster.hp -= dmg;
+            currentMonster.burn = 2;
+            log(`<span class="txt-red">🔥 施放【烈焰焚身】造成 ${dmg} 傷害，並附加［灼燒］狀態！</span>`);
+        } else if (sk.id === 1) {
+            hero.shield += 80;
+            log(`<span class="txt-blue">🛡️ 施放【聖光護盾】，獲得 80 點護盾值！</span>`);
+        } else if (sk.id === 2) {
+            let totalDmg = Math.floor(totalAtk * 0.6) * 3;
+            currentMonster.hp -= totalDmg;
+            log(`<span class="txt-purple">🌀 施放【疾風三連擊】，爆發打擊造成 ${totalDmg} 傷害！</span>`);
+        } else if (sk.id === 3) {
+            let dmg = Math.floor(totalAtk * 1.2);
+            currentMonster.hp -= dmg;
+            currentMonster.armorBreak = 3;
+            log(`<span class="txt-gold">🗡️ 施放【重創破防】！敵人陷入［破防］狀態 3 回合！</span>`);
+        } else if (sk.id === 4) {
+            let dmg = Math.floor(totalAtk * 1.6);
+            let heal = Math.floor(dmg * 0.5);
+            currentMonster.hp -= dmg;
+            hero.hp = Math.min(hero.maxHp, hero.hp + heal);
+            log(`<span class="txt-green">🩸 施放【血氣爆發】，造成 ${dmg} 傷害並吸取 ${heal} HP！</span>`);
+        }
+
+        updateUI();
+        checkBattleStatus();
+    }
+
+    function startBattleProcess(m) {
         if (battleTimer) clearInterval(battleTimer);
-        let m = JSON.parse(JSON.stringify(monsters[diff]));
+        currentMonster = m;
+        inBattle = true;
         hero.hp = hero.maxHp;
         hero.sta = hero.maxSta;
+        hero.shield = 0;
+        hero.buffAtk = 0;
+        skills.forEach(s => s.currentCd = 0);
+        updateSkillCDUI();
         updateUI();
 
         log(`--------------------------------------------------`);
-        log(`⚔️ 挑戰 <strong class="txt-red">${m.name}</strong> (HP: ${m.hp} | 屬性: ${m.element})`);
+        log(`⚔️ 戰鬥開始！挑戰 <strong class="txt-red">${m.name}</strong> (HP: ${m.hp})`);
 
-        let eq = hero.equip || { atk: 0, speed: 0, element: "無", affix: null };
-        let totalAtk = hero.baseAtk + eq.atk;
-        let totalSpeed = hero.speed + eq.speed + (eq.affix?.spdBonus || 0);
-        let critRate = hero.critRate + (eq.affix?.critBonus || 0);
-        let mPoisonStacks = 0, round = 1;
+        let round = 1;
 
         battleTimer = setInterval(() => {
-            log(`<span class="txt-gray">--- 回合 ${round} ---</span>`);
+            log(`<span class="txt-gray">--- [ 回合 ${round} ] ---</span>`);
 
-            if (eq.affix?.type === "berserk") {
-                let selfDmg = Math.max(1, Math.floor(hero.hp * eq.affix.selfBleed));
-                hero.hp -= selfDmg;
-                log(`<span class="txt-red">🩸 狂暴反噬扣除 ${selfDmg} 生命</span>`);
-                if (checkDeath()) return;
+            skills.forEach(s => { if (s.currentCd > 0) s.currentCd--; });
+            updateSkillCDUI();
+
+            hero.sta = Math.min(hero.maxSta, hero.sta + 15);
+
+            // 【裝備特性：堅守庇護】觸發
+            if (hero.equippedWeapon && hero.equippedWeapon.trait.code === "shield" && Math.random() < 0.2) {
+                hero.shield += 40;
+                log(`<span class="txt-gold">✨ 觸發【堅守庇護】特性，自動產生 40 點護盾！</span>`);
             }
 
-            if (mPoisonStacks > 0) {
-                let pDmg = mPoisonStacks * 12;
-                m.hp -= pDmg;
-                log(`<span class="txt-green">🤢 中毒發作：${m.name} 受到 ${pDmg} 點毒傷</span>`);
-                if (checkDeath()) return;
+            // 處理灼燒
+            if (m.burn > 0) {
+                let burnDmg = 20;
+                m.hp -= burnDmg;
+                m.burn--;
+                log(`<span class="txt-red">🔥 ${m.name} 受到灼燒傷害 <b>${burnDmg}</b> 點！</span>`);
+                if (checkBattleStatus()) return;
             }
 
-            if (totalSpeed >= m.speed) {
-                playerAttack();
-                if (m.hp > 0) monsterAttack();
+            // 攻擊計算
+            let eqAtk = hero.equippedWeapon ? hero.equippedWeapon.atk : 0;
+            let eqCrit = hero.equippedWeapon ? hero.equippedWeapon.crit : 0;
+            let totalAtk = hero.baseAtk + eqAtk + hero.buffAtk;
+
+            // 【裝備特性：貫穿破甲】加成
+            if (m.armorBreak > 0) {
+                let extraMult = (hero.equippedWeapon && hero.equippedWeapon.trait.code === "pierce") ? 1.8 : 1.3;
+                totalAtk = Math.floor(totalAtk * extraMult);
+                m.armorBreak--;
+                log(`<span class="txt-gold">⚠️ 破防打擊！傷害乘數提高至 ${Math.round(extraMult*100)}%！</span>`);
+            }
+
+            let isCrit = Math.random() < (hero.critRate + eqCrit);
+            let finalDmg = isCrit ? Math.floor(totalAtk * 1.5) : totalAtk;
+            m.hp -= finalDmg;
+
+            if (isCrit) {
+                log(`<span class="txt-gold">⚡ 觸發【暴擊】！對 ${m.name} 造成了 <b>${finalDmg}</b> 點傷害！</span>`);
             } else {
-                monsterAttack();
-                if (hero.hp > 0) playerAttack();
+                log(`<span class="txt-blue">你</span> 發動攻擊，造成 <b>${finalDmg}</b> 點傷害。`);
+            }
+
+            // 【裝備特性：嗜血吸魂】觸發
+            if (hero.equippedWeapon && hero.equippedWeapon.trait.code === "vamp") {
+                let vampHeal = Math.floor(finalDmg * 0.15);
+                hero.hp = Math.min(hero.maxHp, hero.hp + vampHeal);
+                log(`<span class="txt-green">🩸 觸發【嗜血吸魂】特性，恢復了 ${vampHeal} 生命值！</span>`);
+            }
+
+            // 【裝備特性：熾熱烈焰】觸發
+            if (hero.equippedWeapon && hero.equippedWeapon.trait.code === "burn" && Math.random() < 0.3) {
+                m.burn += 2;
+                log(`<span class="txt-red">🔥 觸發【熾熱烈焰】特性，引燃敵人 2 回合！</span>`);
+            }
+
+            if (checkBattleStatus()) return;
+
+            // 怪物攻擊
+            let mDmg = m.atk;
+            if (hero.shield > 0) {
+                if (hero.shield >= mDmg) {
+                    hero.shield -= mDmg;
+                    log(`<span class="txt-blue">🛡️ 護盾抵擋了 ${mDmg} 點傷害！</span>`);
+                    mDmg = 0;
+                } else {
+                    mDmg -= hero.shield;
+                    hero.shield = 0;
+                    log(`<span class="txt-blue">🛡️ 護盾破裂！</span>`);
+                }
+            }
+
+            if (mDmg > 0) {
+                hero.hp -= mDmg;
+                log(`<span class="txt-red">${m.name}</span> 對你造成 <b>${mDmg}</b> 點傷害。`);
             }
 
             updateUI();
-            if (checkDeath()) return;
+            if (checkBattleStatus()) return;
 
             round++;
-            if (round > 20) { log(`<span class="txt-gold">⌛ 戰鬥平手</span>`); clearInterval(battleTimer); }
-        }, 500);
+        }, 1200);
+    }
 
-        function playerAttack() {
-            let mult = getElementMultiplier(eq.element, m.element) * (m.sta <= 0 ? 1.5 : 1.0);
-            let isCrit = Math.random() < critRate;
-            let dmg = Math.max(1, Math.floor(totalAtk * mult * (isCrit ? 1.8 : 1.0)));
+    function checkBattleStatus() {
+        if (!currentMonster) return false;
 
-            m.hp -= dmg;
-            m.sta = Math.max(0, m.sta - 15);
-
-            log(`<span class="txt-blue">你</span> 造成 <b>${dmg}</b> 點傷害 ${isCrit ? '<strong class="txt-gold">[暴擊!]</strong>' : ''}`);
-
-            if (m.sta === 0) log(`<span class="txt-gold">💥 BREAK! ${m.name} 癱瘓！</span>`);
-            if (eq.affix?.type === "vamp") {
-                let heal = Math.floor(dmg * eq.affix.lifesteal);
-                hero.hp = Math.min(hero.maxHp, hero.hp + heal);
-            }
-            if (eq.affix?.type === "poison" && Math.random() < eq.affix.poisonChance) mPoisonStacks++;
+        if (hero.hp <= 0) {
+            hero.hp = 0; updateUI();
+            log(`<span class="txt-red">💀 戰鬥失敗... 挑戰不成功。</span>`);
+            endBattle();
+            return true;
         }
 
-        function monsterAttack() {
-            if (m.sta <= 0) return;
-            let dmg = Math.max(1, Math.floor(m.atk * getElementMultiplier(m.element, eq.element)));
-            hero.hp -= dmg;
-            log(`<span class="txt-red">${m.name}</span> 造成 <b>${dmg}</b> 傷害`);
-        }
+        if (currentMonster.hp <= 0) {
+            currentMonster.hp = 0; updateUI();
+            let expGained = currentMonster.isBoss ? 120 : 45;
+            let goldGained = currentMonster.isBoss ? 250 : 75;
 
-        function checkDeath() {
-            if (hero.hp <= 0) {
-                hero.hp = 0; updateUI();
-                log(`<span class="txt-red">💀 戰鬥失敗...</span>`);
-                clearInterval(battleTimer); return true;
+            log(`<span class="txt-green">🎉 戰鬥勝利！獲得 ${expGained} EXP 與 ${goldGained} Gold！</span>`);
+            hero.gold += goldGained;
+            gainExp(expGained);
+
+            if (currentMonster.isBoss) {
+                stage.chapter++; stage.node = 1;
+                log(`<span class="txt-gold">🏆 成功擊敗章節首領！晉級至第 ${stage.chapter} 章！</span>`);
+            } else {
+                stage.node++;
+                if (stage.node > 5) stage.node = 5;
             }
-            if (m.hp <= 0) {
-                log(`<span class="txt-green">🎉 戰鬥勝利！</span>`);
-                clearInterval(battleTimer); return true;
-            }
-            return false;
+
+            endBattle();
+            return true;
+        }
+        return false;
+    }
+
+    function gainExp(amount) {
+        hero.exp += amount;
+        if (hero.exp >= hero.maxExp) {
+            hero.level++;
+            hero.exp -= hero.maxExp;
+            hero.maxExp = Math.floor(hero.maxExp * 1.3);
+            hero.maxHp += 35;
+            hero.baseAtk += 6;
+            log(`<span class="txt-gold">🌟 等級提升！晉級至 Lv.${hero.level}！</span>`);
         }
     }
 
+    function endBattle() {
+        clearInterval(battleTimer);
+        battleTimer = null;
+        inBattle = false;
+        currentMonster = null;
+        updateUI();
+    }
+
+    function updateSkillCDUI() {
+        skills.forEach(s => {
+            let cdBox = document.getElementById(`cd-${s.id}`);
+            let btn = document.getElementById(`sk-${s.id}`);
+            if (s.currentCd > 0) {
+                cdBox.style.display = 'flex';
+                cdBox.innerText = s.currentCd;
+                btn.disabled = true;
+            } else {
+                cdBox.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+    }
+
     function updateUI() {
-        document.getElementById('player-hp-display').innerText = `HP: ${Math.max(0, hero.hp)}/${hero.maxHp} | STA: ${Math.max(0, hero.sta)}/${hero.maxSta}`;
+        document.getElementById('p-level').innerText = `Lv.${hero.level}`;
+        document.getElementById('p-hp-sta').innerText = `HP: ${Math.max(0, hero.hp)}/${hero.maxHp} ${hero.shield > 0 ? '(🛡️' + hero.shield + ')' : ''} | STA: ${hero.sta}/${hero.maxSta}`;
+        document.getElementById('p-exp-gold').innerText = `EXP: ${hero.exp}/${hero.maxExp} | 金幣: ${hero.gold}G | 關卡: ${stage.chapter}-${stage.node}`;
     }
 
     function log(msg) {
@@ -444,7 +762,13 @@
         l.innerHTML += msg + "<br>";
         l.scrollTop = l.scrollHeight;
     }
+
+    // 初始化隨機高畫質背景
+    changeRandomBackground();
+    updateUI();
 </script>
 
 </body>
 </html>
+
+```
