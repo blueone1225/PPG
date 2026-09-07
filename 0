@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗黑像素 RPG - 裝備刷怪</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f0f1b;
+            --panel-bg: #1a1a2e;
+            --accent-gold: #ffcc00;
+            --accent-red: #ff4757;
+            --accent-green: #2ed573;
+            --accent-blue: #1e90ff;
+            --text-color: #e0e0e0;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-card {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--panel-bg);
+            border: 3px solid #2d2d44;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(255, 204, 0, 0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px #000;
+        }
+
+        /* 屬性面板 */
+        .panel {
+            background: #111122;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #2e2e4a;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #8888a0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        /* 血條 */
+        .hp-container {
+            margin-bottom: 12px;
+        }
+        .hp-label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .hp-bar-bg {
+            width: 100%;
+            height: 16px;
+            background-color: #2a2a3c;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+        .hp-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ff4757, #ff6b81);
+            transition: width 0.3s ease;
+        }
+
+        /* 裝備卡片展示 */
+        .equip-card {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #181828;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #555;
+            margin-bottom: 12px;
+        }
+        .equip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .equip-name {
+            font-weight: bold;
+            font-size: 1.05rem;
+        }
+        .equip-stats {
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+        .equip-effect {
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            background: rgba(255, 204, 0, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        /* 稀有度顏色 */
+        .tier-弱 { color: #a4b0be; border-color: #a4b0be !important; }
+        .tier-中 { color: #1e90ff; border-color: #1e90ff !important; }
+        .tier-強 { color: #ffa502; border-color: #ffa502 !important; }
+
+        /* 按鈕風格 */
+        .btn-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        button {
+            background: #2ed573;
+            color: #000;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 0 #1e9e52;
+        }
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .btn-craft {
+            width: 100%;
+            background: #eccc68;
+            box-shadow: 0 4px 0 #b5983b;
+            margin-top: 4px;
+        }
+
+        .btn-easy { background: #2ed573; box-shadow: 0 4px 0 #1e9e52; }
+        .btn-med { background: #ffa502; box-shadow: 0 4px 0 #c77e00; }
+        .btn-hard { background: #ff4757; color: #fff; box-shadow: 0 4px 0 #a42330; }
+
+        /* 戰鬥 Log */
+        .log-container {
+            background: #0a0a12;
+            border: 1px solid #2a2a3c;
+            border-radius: 8px;
+            height: 140px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #888;
+        }
+        .log-entry { margin-bottom: 4px; }
+        .log-player { color: #70a1ff; }
+        .log-monster { color: #ff6b81; }
+        .log-effect { color: var(--accent-gold); }
+        .log-win { color: #2ed573; font-weight: bold; }
+        .log-loss { color: #ff4757; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <h1>⚔️ PIXEL RPG ⚔️</h1>
+
+    <div class="panel">
+        <div class="section-title">Hero Status</div>
+        
+        <div class="hp-container">
+            <div class="hp-label">
+                <span>HP</span>
+                <span><span id="player-hp">100</span> / 100</span>
+            </div>
+            <div class="hp-bar-bg">
+                <div class="hp-bar-fill" id="hp-fill"></div>
+            </div>
+        </div>
+
+        <div class="equip-card" id="equip-card">
+            <div class="equip-header">
+                <span class="equip-name" id="equip-name">徒手裝備</span>
+                <span class="equip-stats">攻 +<span id="equip-atk">0</span> / 防 +<span id="equip-def">0</span></span>
+            </div>
+            <div class="equip-effect" id="equip-effect" style="display:none;">特殊效果</div>
+        </div>
+
+        <button class="btn-craft" onclick="craftEquipment()">🔨 鍛造裝備 (隨機品質)</button>
+    </div>
+
+    <div class="panel">
+        <div class="section-title">Select Enemy</div>
+        <div class="btn-group">
+            <button class="btn-easy" onclick="startBattle('small')">小怪</button>
+            <button class="btn-med" onclick="startBattle('medium')">中怪</button>
+            <button class="btn-hard" onclick="startBattle('big')">大怪</button>
+        </div>
+    </div>
+
+    <div class="section-title">Battle Log</div>
+    <div class="log-container" id="game-log">
+        <div class="log-entry">準備就緒，請打造裝備並選擇對手...</div>
+    </div>
+</div>
+
+<script>
+    let player = { maxHp: 100, hp: 100, baseAtk: 15, equip: null };
+
+    const specialEffects = [
+        { name: "⚡ 反傷 25%", type: "reflect", value: 0.25 },
+        { name: "🩸 吸血 15%", type: "lifesteal", value: 0.15 },
+        { name: "🛡️ 防禦下降 10%", type: "defDown", value: 0.10 },
+        { name: "💀 易傷 (+15%承傷)", type: "fragile", value: 0.15 }
+    ];
+
+    function craftEquipment() {
+        const qualities = [
+            { tier: "弱", atk: Math.floor(Math.random() * 5) + 1, def: Math.floor(Math.random() * 3) + 1 },
+            { tier: "中", atk: Math.floor(Math.random() * 8) + 6, def: Math.floor(Math.random() * 5) + 4 },
+            { tier: "強", atk: Math.floor(Math.random() * 12) + 15, def: Math.floor(Math.random() * 8) + 8 }
+        ];
+
+        const selected = qualities[Math.floor(Math.random() * qualities.length)];
+        let effect = Math.random() < 0.25 ? specialEffects[Math.floor(Math.random() * specialEffects.length)] : null;
+
+        player.equip = { name: `${selected.tier}級裝備`, tier: selected.tier, atk: selected.atk, def: selected.def, effect: effect };
+
+        // UI 渲染
+        const card = document.getElementById('equip-card');
+        card.className = `equip-card tier-${selected.tier}`;
+        document.getElementById('equip-name').innerText = player.equip.name;
+        document.getElementById('equip-atk').innerText = player.equip.atk;
+        document.getElementById('equip-def').innerText = player.equip.def;
+
+        const effectEl = document.getElementById('equip-effect');
+        if (effect) {
+            effectEl.innerText = effect.name;
+            effectEl.style.display = "inline-block";
+        } else {
+            effectEl.style.display = "none";
+        }
+
+        log(`🔨 成功鍛造出 <span class="tier-${selected.tier}">[${player.equip.name}]</span>！`);
+    }
+
+    const monsters = {
+        small: { name: "史萊姆", hp: 30, atk: 8, def: 2 },
+        medium: { name: "哥布林", hp: 70, atk: 18, def: 5 },
+        big: { name: "紅蓮巨龍", hp: 150, atk: 32, def: 10 }
+    };
+
+    function startBattle(difficulty) {
+        let monster = { ...monsters[difficulty] };
+        player.hp = player.maxHp;
+        updateHpUI();
+
+        log(`--- ⚔️ 進入戰鬥：對決 ${monster.name} ---`);
+
+        let equipAtk = player.equip ? player.equip.atk : 0;
+        let equipDef = player.equip ? player.equip.def : 0;
+        let effect = player.equip ? player.equip.effect : null;
+
+        if (effect && effect.type === "defDown") equipDef = Math.floor(equipDef * 0.9);
+
+        let round = 1;
+        while (player.hp > 0 && monster.hp > 0) {
+            // 玩家攻擊
+            let pDamage = Math.max(1, (player.baseAtk + equipAtk) - monster.def);
+            monster.hp -= pDamage;
+            log(`<span class="log-player">你</span> 攻擊造成 <b>${pDamage}</b> 點傷害`);
+
+            if (effect && effect.type === "lifesteal") {
+                let heal = Math.floor(pDamage * effect.value);
+                player.hp = Math.min(player.maxHp, player.hp + heal);
+                log(`<span class="log-effect">${effect.name}：恢復了 ${heal} HP</span>`);
+            }
+
+            if (monster.hp <= 0) {
+                log(`<span class="log-win">🎉 戰鬥勝利！擊敗了 ${monster.name}</span>`);
+                break;
+            }
+
+            // 怪物攻擊
+            let mDamage = Math.max(1, monster.atk - equipDef);
+            if (effect && effect.type === "fragile") mDamage = Math.floor(mDamage * 1.15);
+
+            player.hp -= mDamage;
+            log(`<span class="log-monster">${monster.name}</span> 對你造成 <b>${mDamage}</b> 點傷害`);
+
+            if (effect && effect.type === "reflect") {
+                let reflectDmg = Math.floor(mDamage * effect.value);
+                monster.hp -= reflectDmg;
+                log(`<span class="log-effect">${effect.name}：反彈了 ${reflectDmg} 傷害</span>`);
+            }
+
+            if (player.hp <= 0) {
+                log(`<span class="log-loss">💀 你戰敗了...</span>`);
+                break;
+            }
+
+            round++;
+            if (round > 20) break;
+        }
+
+        updateHpUI();
+    }
+
+    function updateHpUI() {
+        const currentHp = Math.max(0, player.hp);
+        document.getElementById('player-hp').innerText = currentHp;
+        const pct = (currentHp / player.maxHp) * 100;
+        document.getElementById('hp-fill').style.width = `${pct}%`;
+    }
+
+    function log(message) {
+        const logBox = document.getElementById('game-log');
+        logBox.innerHTML += `<div class="log-entry">${message}</div>`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
