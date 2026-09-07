@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遺忘之劍 - 裝備特性與隨機圖庫版</title>
+    <title>遺忘之劍 - 上傳圖片輪播版</title>
     <style>
         :root {
             --bg-dark: rgba(18, 16, 23, 0.92);
@@ -37,6 +37,7 @@
             background: rgba(0, 0, 0, 0.4);
         }
 
+        /* 左側戰鬥區域 */
         .battle-overlay {
             flex: 1;
             padding: 20px;
@@ -47,20 +48,125 @@
             height: 100%;
         }
 
-        .log-box {
+        /* ----- 紅圈區塊：圖片輪播容器 ----- */
+        .carousel-box {
+            position: relative;
+            flex: 1;
             background: rgba(12, 13, 18, 0.88);
             border: 1px solid var(--border-gold);
-            border-radius: 8px;
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
+            border-radius: 12px;
+            overflow: hidden;
             backdrop-filter: blur(10px);
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
         }
 
+        /* 輪播圖片顯示區 */
+        .carousel-slider {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .carousel-slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .carousel-slide.active {
+            opacity: 1;
+        }
+
+        /* 控制按鈕 (左右箭頭) */
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border: 1px solid var(--border-gold);
+            border-radius: 50%;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            transition: all 0.2s;
+        }
+        .carousel-btn:hover { background: rgba(212, 175, 55, 0.8); color: #000; }
+        .carousel-btn.prev { left: 10px; }
+        .carousel-btn.next { right: 10px; }
+
+        /* 上傳按鈕工具列 */
+        .carousel-tools {
+            position: absolute;
+            top: 10px; right: 10px;
+            z-index: 6;
+            display: flex; gap: 8px;
+        }
+
+        .upload-btn {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--gold-light);
+            color: var(--gold-light);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 4px;
+        }
+
+        .upload-btn:hover {
+            background: var(--gold-light);
+            color: #000;
+        }
+
+        /* 輪播點指示器 */
+        .carousel-dots {
+            position: absolute;
+            bottom: 85px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 6px;
+            z-index: 5;
+        }
+
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: var(--gold-light);
+            width: 20px;
+            border-radius: 4px;
+        }
+
+        /* 浮動日誌訊息區 */
+        .log-overlay {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(12, 13, 18, 0.95) 100%);
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 8px 12px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            z-index: 5;
+        }
+
+        /* ----- 技能列 ----- */
         .skills-bar {
             background: rgba(18, 16, 23, 0.95);
             border: 1px solid var(--border-gold);
@@ -101,6 +207,7 @@
             font-weight: bold; font-size: 1rem;
         }
 
+        /* 右側主選單 */
         .menu-modal {
             width: 420px;
             height: 100%;
@@ -198,7 +305,7 @@
             .game-screen { flex-direction: column-reverse; overflow-y: auto; }
             .menu-modal { width: 100vw; height: auto; border-left: none; border-top: 1px solid var(--border-gold); }
             .sidebar-right { display: none; }
-            .battle-overlay { height: 380px; padding: 10px; }
+            .battle-overlay { height: 420px; padding: 10px; }
             .grid-container { grid-template-columns: repeat(4, 1fr); height: 260px; }
             .skills-bar { padding: 6px; gap: 4px; }
             .skill-name { font-size: 0.65rem; }
@@ -209,12 +316,36 @@
 
 <div class="game-screen">
 
-    <!-- 左側：戰鬥與技能 -->
+    <!-- 左側：圖片輪播 + 戰鬥日誌 + 技能 -->
     <div class="battle-overlay">
-        <div class="log-box" id="log">
-            <span class="txt-gold">［系統］</span> 高畫質隨機背景庫與【裝備專屬特性系統】已成功載入！<br>
+        
+        <!-- 紅圈區域：輪播圖片機制 -->
+        <div class="carousel-box">
+            <!-- 工具列：上傳按鈕 -->
+            <div class="carousel-tools">
+                <label class="upload-btn">
+                    📷 上傳圖片
+                    <input type="file" id="image-uploader" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+                </label>
+            </div>
+
+            <!-- 輪播圖片容器 -->
+            <div class="carousel-slider" id="carousel-slider"></div>
+
+            <!-- 控制按鈕 -->
+            <div class="carousel-btn prev" onclick="prevSlide()">❮</div>
+            <div class="carousel-btn next" onclick="nextSlide()">❯</div>
+
+            <!-- 指示點 -->
+            <div class="carousel-dots" id="carousel-dots"></div>
+
+            <!-- 浮動戰鬥日誌 -->
+            <div class="log-overlay" id="log">
+                <span class="txt-gold">［系統］</span> 上傳圖片輪播機制已啟用！點擊右上角「上傳圖片」可自由新增展示圖。<br>
+            </div>
         </div>
 
+        <!-- 技能列 -->
         <div class="skills-bar">
             <button class="skill-btn" id="sk-0" onclick="useSkill(0)">
                 <span class="skill-icon">🔥</span><span class="skill-name">烈焰焚身</span><span class="skill-cost">20 STA</span>
@@ -244,12 +375,7 @@
         <div class="profile-header">
             <div class="avatar-box">🗡️</div>
             <div class="player-info">
-<div class="player-name">
-    <span id="p-username"> chrome瀏覽x手機遊玩橫向 </span> 
-    <span class="txt-gold" id="p-level">Lv.1</span>
-</div>
-
-                
+                <div class="player-name">Fadeaway <span class="txt-gold" id="p-level">Lv.1</span></div>
                 <div class="player-id">
                     <span id="p-custom-id">玩家編號：#884920</span>
                     <span class="edit-id-btn" onclick="changePlayerID()">[修改]</span>
@@ -320,23 +446,84 @@
 </div>
 
 <script>
-    // 1. 多樣隨機圖片庫 (使用 Unsplash 魔幻風格背景圖庫)
+    // ------------------- 輪播圖片機制 -------------------
+    let carouselImages = [
+        "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200&auto=format&fit=crop", // 暗黑城堡
+    
+    ];
+    let currentSlide = 0;
+    let carouselInterval = null;
+
+    function renderCarousel() {
+        const slider = document.getElementById('carousel-slider');
+        const dotsContainer = document.getElementById('carousel-dots');
+        slider.innerHTML = '';
+        dotsContainer.innerHTML = '';
+
+        carouselImages.forEach((imgUrl, index) => {
+            // 建立 Slide
+            const slide = document.createElement('div');
+            slide.className = `carousel-slide ${index === currentSlide ? 'active' : ''}`;
+            slide.style.backgroundImage = `url('${imgUrl}')`;
+            slider.appendChild(slide);
+
+            // 建立 Dot
+            const dot = document.createElement('div');
+            dot.className = `dot ${index === currentSlide ? 'active' : ''}`;
+            dot.onclick = () => goToSlide(index);
+            dotsContainer.appendChild(dot);
+        });
+    }
+
+    function showSlide(index) {
+        if (index < 0) currentSlide = carouselImages.length - 1;
+        else if (index >= carouselImages.length) currentSlide = 0;
+        else currentSlide = index;
+
+        renderCarousel();
+        resetCarouselTimer();
+    }
+
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+    function goToSlide(index) { showSlide(index); }
+
+    function resetCarouselTimer() {
+        if (carouselInterval) clearInterval(carouselInterval);
+        carouselInterval = setInterval(nextSlide, 3500); // 3.5秒自動輪播
+    }
+
+    // 上傳本地圖片處理
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageUrl = e.target.result;
+                carouselImages.push(imageUrl);
+                currentSlide = carouselImages.length - 1; // 自動切換到最新圖片
+                renderCarousel();
+                log(`<span class="txt-green">🖼️ 圖片上傳成功！已新增至輪播圖庫紙。</span>`);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // ------------------- 桌布背景切換 -------------------
     const bgImages = [
-        "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop", // 暗黑城堡
-        "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1600&auto=format&fit=crop", // 星空廢墟
-        "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop", // 雪山夜空
-        "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1600&auto=format&fit=crop", // 夢幻星雲
-        "https://images.unsplash.com/photo-1514539079130-25950c84af65?q=80&w=1600&auto=format&fit=crop", // 迷霧森林
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1600&auto=format&fit=crop"  // 雄偉山脈
+        "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1600&auto=format&fit=crop"
     ];
 
     function changeRandomBackground() {
         let randomImg = bgImages[Math.floor(Math.random() * bgImages.length)];
         document.body.style.backgroundImage = `url('${randomImg}')`;
-        log(`<span class="txt-gold">🖼️ 已隨機切換高清奇幻背景圖！</span>`);
+        log(`<span class="txt-gold">🖼️ 已切換隨機背景圖！</span>`);
     }
 
-    // 2. 可自訂玩家編號
+    // ------------------- 遊戲角色與邏輯 -------------------
     let playerId = "884920";
     function changePlayerID() {
         let newId = prompt("請輸入您的新專屬編號（最多6位數字或字母）：", playerId);
@@ -347,7 +534,6 @@
         }
     }
 
-    // 3. 裝備特性庫
     const weaponTraits = [
         { id: "vampire", name: "【特性：嗜血吸魂】", desc: "普通攻擊時附帶 15% 吸血效果", code: "vamp" },
         { id: "flame", name: "【特性：熾熱烈焰】", desc: "攻擊時有 30% 機率直接讓敵人進入灼燒狀態", code: "burn" },
@@ -380,15 +566,13 @@
         { id: 'p_hp', name: '大生命藥水', price: 50, desc: '恢復 100 點生命值', type: 'heal_hp' },
         { id: 'p_sta', name: '大活力藥水', price: 50, desc: '恢復 50 點耐力值 (STA)', type: 'heal_sta' },
         { id: 'buff_atk', name: '力量藥劑', price: 150, desc: '永久增加 5 點基礎攻擊力', type: 'perm_atk' },
-        { id: 'buff_hp', name: '體魄強化藥劑', price: 150, desc: '永久增加 30 點最大血量', type: 'perm_hp' },
-        { id: 'chest', name: '神秘特效寶箱', price: 200, desc: '獲得帶有專屬特性的精良武器', type: 'chest' }
+        { id: 'buff_hp', name: '體魄強化藥劑', price: 150, desc: '永久增加 30 點最大血量', type: 'perm_hp' }
     ];
 
     let currentMonster = null;
     let battleTimer = null;
     let inBattle = false;
 
-    // 鍛造裝備 (生成帶有特性的裝備)
     function craftEquipment() {
         if (hero.inventory.length >= 8) {
             log(`<span class="txt-red">⚠️ 背包空間不足（上限 8 個）！請先出售多餘裝備。</span>`);
@@ -406,8 +590,6 @@
         let elem = elements[Math.floor(Math.random() * elements.length)];
         let atkVal = Math.floor((Math.random() * 10 + 10) * t.mult);
         let critVal = t.crit;
-
-        // 隨機抽選 1 個裝備特性
         let trait = weaponTraits[Math.floor(Math.random() * weaponTraits.length)];
 
         let item = {
@@ -455,7 +637,6 @@
         else if (item.type === 'heal_sta') { hero.sta = Math.min(hero.maxSta, hero.sta + 50); log(`<span class="txt-blue">🧪 使用了 ${item.name}，恢復 50 STA！</span>`); }
         else if (item.type === 'perm_atk') { hero.baseAtk += 5; log(`<span class="txt-gold">💪 使用了 ${item.name}，基礎攻擊力 +5！</span>`); }
         else if (item.type === 'perm_hp') { hero.maxHp += 30; hero.hp += 30; log(`<span class="txt-gold">❤️ 使用了 ${item.name}，最大生命值 +30！</span>`); }
-        else if (item.type === 'chest') { craftEquipment(); }
         updateUI();
     }
 
@@ -536,8 +717,6 @@
         if (hero.sta < sk.cost) { log(`<span class="txt-red">⚠️ 耐力不足（需 ${sk.cost} STA）</span>`); return; }
 
         hero.sta -= sk.cost;
-        
-        // 疾風迅捷特性：減少技能冷卻
         let cdReduce = (hero.equippedWeapon && hero.equippedWeapon.trait.code === "haste") ? 1 : 0;
         sk.currentCd = Math.max(1, sk.cd - cdReduce);
         updateSkillCDUI();
@@ -599,13 +778,11 @@
 
             hero.sta = Math.min(hero.maxSta, hero.sta + 15);
 
-            // 【裝備特性：堅守庇護】觸發
             if (hero.equippedWeapon && hero.equippedWeapon.trait.code === "shield" && Math.random() < 0.2) {
                 hero.shield += 40;
                 log(`<span class="txt-gold">✨ 觸發【堅守庇護】特性，自動產生 40 點護盾！</span>`);
             }
 
-            // 處理灼燒
             if (m.burn > 0) {
                 let burnDmg = 20;
                 m.hp -= burnDmg;
@@ -614,12 +791,10 @@
                 if (checkBattleStatus()) return;
             }
 
-            // 攻擊計算
             let eqAtk = hero.equippedWeapon ? hero.equippedWeapon.atk : 0;
             let eqCrit = hero.equippedWeapon ? hero.equippedWeapon.crit : 0;
             let totalAtk = hero.baseAtk + eqAtk + hero.buffAtk;
 
-            // 【裝備特性：貫穿破甲】加成
             if (m.armorBreak > 0) {
                 let extraMult = (hero.equippedWeapon && hero.equippedWeapon.trait.code === "pierce") ? 1.8 : 1.3;
                 totalAtk = Math.floor(totalAtk * extraMult);
@@ -637,14 +812,12 @@
                 log(`<span class="txt-blue">你</span> 發動攻擊，造成 <b>${finalDmg}</b> 點傷害。`);
             }
 
-            // 【裝備特性：嗜血吸魂】觸發
             if (hero.equippedWeapon && hero.equippedWeapon.trait.code === "vamp") {
                 let vampHeal = Math.floor(finalDmg * 0.15);
                 hero.hp = Math.min(hero.maxHp, hero.hp + vampHeal);
                 log(`<span class="txt-green">🩸 觸發【嗜血吸魂】特性，恢復了 ${vampHeal} 生命值！</span>`);
             }
 
-            // 【裝備特性：熾熱烈焰】觸發
             if (hero.equippedWeapon && hero.equippedWeapon.trait.code === "burn" && Math.random() < 0.3) {
                 m.burn += 2;
                 log(`<span class="txt-red">🔥 觸發【熾熱烈焰】特性，引燃敵人 2 回合！</span>`);
@@ -652,7 +825,6 @@
 
             if (checkBattleStatus()) return;
 
-            // 怪物攻擊
             let mDmg = m.atk;
             if (hero.shield > 0) {
                 if (hero.shield >= mDmg) {
@@ -758,12 +930,12 @@
         l.scrollTop = l.scrollHeight;
     }
 
-    // 初始化隨機高畫質背景
+    // 初始化執行
     changeRandomBackground();
+    renderCarousel();
+    resetCarouselTimer();
     updateUI();
 </script>
 
 </body>
 </html>
-
-```
